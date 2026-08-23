@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "SIGA Aduanas RD",
+    "slug": "siga-aduanas-rd",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "siga",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5FBEF"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "do.gov.aduanas.siga"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#558B2F"
+      },
+      "package": "do.gov.aduanas.siga"
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
