@@ -8,6 +8,7 @@ import {
   Switch,
   Alert,
   Platform,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -42,35 +43,18 @@ export default function PerfilScreen() {
   const router = useRouter();
 
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [biometricsEnabled, setBiometricsEnabled] = useState(true);
 
-  const handleLogout = async () => {
-    const doLogout = async () => {
-      try {
-        await logout();
-        router.replace('/(auth)/login');
-      } catch (e) {
-        console.error('Error al cerrar sesión:', e);
-      }
-    };
-
-    if (Platform.OS === 'web') {
-      const confirmLogout = typeof window !== 'undefined' ? window.confirm('¿Estás seguro de que deseas cerrar sesión en SIGA?') : true;
-      if (confirmLogout) {
-        await doLogout();
-      }
-      return;
+  const handleConfirmLogout = async () => {
+    setLogoutModalVisible(false);
+    try {
+      await logout();
+      router.replace('/(auth)/login');
+    } catch (e) {
+      console.error('Error al cerrar sesión:', e);
     }
-
-    Alert.alert('Cerrar Sesión', '¿Estás seguro de que deseas salir de SIGA?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Cerrar Sesión',
-        style: 'destructive',
-        onPress: doLogout,
-      },
-    ]);
   };
 
   const handleSwitchRole = async (targetRole: UserRole) => {
@@ -104,22 +88,13 @@ export default function PerfilScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mi Perfil</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            onPress={() => setEditModalVisible(true)}
-            style={styles.editHeaderBtn}
-            activeOpacity={0.7}
-          >
-            <Edit3 size={18} color={COLORS.primaryDark} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleLogout}
-            style={[styles.editHeaderBtn, styles.logoutHeaderBtn]}
-            activeOpacity={0.7}
-          >
-            <LogOut size={17} color="#B91C1C" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          onPress={() => setEditModalVisible(true)}
+          style={styles.editHeaderBtn}
+          activeOpacity={0.7}
+        >
+          <Edit3 size={18} color={COLORS.primaryDark} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -299,12 +274,51 @@ export default function PerfilScreen() {
             icon={LogOut}
             variant="danger"
             size="medium"
-            onPress={handleLogout}
+            onPress={() => setLogoutModalVisible(true)}
             fullWidth
           />
           <Text style={styles.versionText}>SIGA Mobile RD • Versión 1.0.0 (Expo SDK 52)</Text>
         </View>
       </ScrollView>
+
+      {/* Modal Flotante de Confirmación de Cierre de Sesión */}
+      <Modal
+        visible={logoutModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLogoutModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalIconCircle}>
+              <LogOut size={26} color="#DC2626" />
+            </View>
+
+            <Text style={styles.modalTitle}>¿Cerrar Sesión?</Text>
+            <Text style={styles.modalMessage}>
+              ¿Estás seguro de que deseas salir de tu cuenta en SIGA? Tendrás que ingresar tus credenciales para acceder nuevamente.
+            </Text>
+
+            <View style={styles.modalButtonsRow}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setLogoutModalVisible(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalConfirmBtn}
+                onPress={handleConfirmLogout}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.modalConfirmText}>Sí, Salir</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Modal de Edición de Perfil */}
       <ProfileEditModal
@@ -338,11 +352,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.textPrimary,
   },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
   editHeaderBtn: {
     width: 36,
     height: 36,
@@ -350,9 +359,6 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.surfaceSubtle,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  logoutHeaderBtn: {
-    backgroundColor: '#FEE2E2',
   },
   scrollContent: {
     paddingBottom: 110,
@@ -519,5 +525,84 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: 11,
     color: COLORS.textMuted,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalContainer: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  modalIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 19,
+    marginBottom: 22,
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  modalConfirmBtn: {
+    flex: 1.2,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#DC2626',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    elevation: 3,
+  },
+  modalConfirmText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
 });
