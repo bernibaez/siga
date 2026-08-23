@@ -45,16 +45,30 @@ export default function PerfilScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [biometricsEnabled, setBiometricsEnabled] = useState(true);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const doLogout = async () => {
+      try {
+        await logout();
+        router.replace('/(auth)/login');
+      } catch (e) {
+        console.error('Error al cerrar sesión:', e);
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmLogout = typeof window !== 'undefined' ? window.confirm('¿Estás seguro de que deseas cerrar sesión en SIGA?') : true;
+      if (confirmLogout) {
+        await doLogout();
+      }
+      return;
+    }
+
     Alert.alert('Cerrar Sesión', '¿Estás seguro de que deseas salir de SIGA?', [
       { text: 'Cancelar', style: 'cancel' },
       {
         text: 'Cerrar Sesión',
         style: 'destructive',
-        onPress: async () => {
-          await logout();
-          router.replace('/(auth)/login');
-        },
+        onPress: doLogout,
       },
     ]);
   };
@@ -90,12 +104,22 @@ export default function PerfilScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mi Perfil</Text>
-        <TouchableOpacity
-          onPress={() => setEditModalVisible(true)}
-          style={styles.editHeaderBtn}
-        >
-          <Edit3 size={18} color={COLORS.primaryDark} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            onPress={() => setEditModalVisible(true)}
+            style={styles.editHeaderBtn}
+            activeOpacity={0.7}
+          >
+            <Edit3 size={18} color={COLORS.primaryDark} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleLogout}
+            style={[styles.editHeaderBtn, styles.logoutHeaderBtn]}
+            activeOpacity={0.7}
+          >
+            <LogOut size={17} color="#B91C1C" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -314,6 +338,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.textPrimary,
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   editHeaderBtn: {
     width: 36,
     height: 36,
@@ -322,8 +351,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  logoutHeaderBtn: {
+    backgroundColor: '#FEE2E2',
+  },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 110,
   },
   userBanner: {
     margin: 16,

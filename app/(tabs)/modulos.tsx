@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 110,
   },
   moduleSelector: {
     flexDirection: 'row',

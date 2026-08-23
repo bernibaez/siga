@@ -1,6 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View, Platform, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Home,
   Folder,
@@ -13,9 +14,19 @@ import { AlonsoChatBot } from '@/components/ui/AlonsoChatBot';
 import { useData } from '@/contexts/DataContext';
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
   const { expedientes } = useData();
 
-  const pendingExpCount = expedientes.filter((e) => e.estado === 'pendiente').length;
+  const pendingExpCount = expedientes.filter(
+    (e) =>
+      e.estado === 'inspeccionando' ||
+      e.estado === 'registrado_aceptado' ||
+      e.estado === 'pendiente'
+  ).length;
+
+  // Altura y padding dinámico para que no se corte el texto en ningún dispositivo
+  const bottomInset = Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 10);
+  const tabHeight = 58 + bottomInset;
 
   return (
     <View style={styles.container}>
@@ -23,30 +34,30 @@ export default function TabsLayout() {
         screenOptions={{
           headerShown: false,
           tabBarActiveTintColor: '#002D62',
-          tabBarInactiveTintColor: '#9CA3AF',
+          tabBarInactiveTintColor: '#94A3B8',
           tabBarStyle: {
-            backgroundColor: COLORS.white,
-            borderTopColor: COLORS.borderLight,
+            backgroundColor: '#FFFFFF',
+            borderTopColor: '#E2E8F0',
             borderTopWidth: 1,
-            height: Platform.OS === 'ios' ? 88 : 68,
-            paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-            paddingTop: 8,
-            elevation: 8,
+            height: tabHeight,
+            paddingBottom: bottomInset,
+            paddingTop: 6,
+            elevation: 10,
             shadowColor: '#000000',
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.04,
-            shadowRadius: 6,
+            shadowOffset: { width: 0, height: -3 },
+            shadowOpacity: 0.06,
+            shadowRadius: 8,
           },
           tabBarItemStyle: {
             justifyContent: 'center',
             alignItems: 'center',
-            paddingVertical: 2,
+            height: 48,
           },
           tabBarLabelStyle: {
             fontSize: 11,
-            fontWeight: '600',
+            fontWeight: '700',
             marginTop: 2,
-            marginBottom: 2,
+            marginBottom: 0,
           },
         }}
       >
