@@ -24,9 +24,9 @@ export default function TabsLayout() {
       e.estado === 'pendiente'
   ).length;
 
-  // Altura y padding dinámico para que no se corte el texto en ningún dispositivo
-  const bottomInset = Math.max(insets.bottom, Platform.OS === 'ios' ? 24 : 10);
-  const tabHeight = 58 + bottomInset;
+  // Altura y padding generoso para que los textos nunca queden tapados por el borde curvado ni por la barra de inicio
+  const bottomInset = Math.max(insets.bottom, Platform.OS === 'ios' ? 30 : 16);
+  const tabHeight = Platform.OS === 'ios' ? (insets.bottom > 0 ? 58 + insets.bottom : 88) : 74;
 
   return (
     <View style={styles.container}>
@@ -41,7 +41,7 @@ export default function TabsLayout() {
             borderTopWidth: 1,
             height: tabHeight,
             paddingBottom: bottomInset,
-            paddingTop: 6,
+            paddingTop: 8,
             elevation: 10,
             shadowColor: '#000000',
             shadowOffset: { width: 0, height: -3 },
@@ -51,7 +51,7 @@ export default function TabsLayout() {
           tabBarItemStyle: {
             justifyContent: 'center',
             alignItems: 'center',
-            height: 48,
+            paddingVertical: 2,
           },
           tabBarLabelStyle: {
             fontSize: 11,
