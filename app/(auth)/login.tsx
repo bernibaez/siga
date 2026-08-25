@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
-  Mail,
+  FileText,
   Building2,
   Lock,
   Eye,
@@ -24,9 +24,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { DgaLogo } from '@/components/ui/DgaLogo';
 
 export default function LoginScreen() {
-  const [loginMethod, setLoginMethod] = useState<'email' | 'rnc_cedula'>('email');
-  const [email, setEmail] = useState('ejemplo@empresa.com');
   const [rncOrCedula, setRncOrCedula] = useState('130-98765-4');
+  const [declaracion, setDeclaracion] = useState('10030eejemplo');
   const [password, setPassword] = useState('123456');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -37,7 +36,7 @@ export default function LoginScreen() {
   const formatRncOrCedula = (text: string) => {
     const digits = text.replace(/\D/g, '').slice(0, 11);
     if (digits.length <= 3) return digits;
-    
+
     // Si tiene 10 u 11 dígitos, formatear como Cédula (XXX-XXXXXXX-X)
     if (digits.length > 9) {
       if (digits.length <= 10) return `${digits.slice(0, 3)}-${digits.slice(3, 10)}`;
@@ -54,20 +53,21 @@ export default function LoginScreen() {
   };
 
   const handleLogin = async () => {
-    const identifier = loginMethod === 'email' ? email.trim() : rncOrCedula.trim();
-    if (!identifier || !password.trim()) {
+    const cleanRnc = rncOrCedula.trim();
+    const cleanDec = declaracion.trim();
+    const cleanPass = password.trim();
+
+    if (!cleanRnc || !cleanDec || !cleanPass) {
       Alert.alert(
         'Datos requeridos',
-        loginMethod === 'email'
-          ? 'Por favor ingresa tu correo electrónico y contraseña.'
-          : 'Por favor ingresa tu RNC o cédula y contraseña.'
+        'Por favor completa tu RNC o Cédula, Declaración y Contraseña.'
       );
       return;
     }
 
     setLoading(true);
     try {
-      const res = await login(identifier, password);
+      const res = await login(cleanRnc || cleanDec, cleanPass);
       if (res.success) {
         router.replace('/(tabs)');
       } else {
@@ -112,122 +112,74 @@ export default function LoginScreen() {
           </Text>
         </View>
 
-        {/* Formulario */}
+        {/* Formulario Unificado de 3 Campos */}
         <View style={styles.formContainer}>
-          {/* Selector de Método de Ingreso (Correo / RNC o Cédula) */}
-          <View style={styles.tabSelector}>
-            <TouchableOpacity
-              style={[
-                styles.tabItem,
-                loginMethod === 'email' && styles.tabItemActive,
-              ]}
-              onPress={() => setLoginMethod('email')}
-              activeOpacity={0.8}
-            >
-              <Mail
-                size={16}
-                color={loginMethod === 'email' ? '#002B66' : '#64748B'}
-                strokeWidth={loginMethod === 'email' ? 2.2 : 1.8}
+          {/* 1. RNC o Cédula */}
+          <View style={styles.inputGroup}>
+            <View style={styles.rncLabelRow}>
+              <Text style={styles.inputLabel}>RNC</Text>
+              <Text style={styles.rncHintText}>9 u 11 dígitos</Text>
+            </View>
+            <View style={styles.inputWrapper}>
+              <Building2 size={18} color="#94A3B8" style={styles.inputIcon} />
+              <TextInput
+                style={styles.inputField}
+                value={rncOrCedula}
+                onChangeText={handleRncOrCedulaChange}
+                placeholder="130-98765-4 o 001-1234567-8"
+                placeholderTextColor="#94A3B8"
+                keyboardType="numeric"
+                maxLength={13}
+                autoCapitalize="none"
+                autoCorrect={false}
               />
-              <Text
-                style={[
-                  styles.tabText,
-                  loginMethod === 'email' && styles.tabTextActive,
-                ]}
-              >
-                Correo
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.tabItem,
-                loginMethod === 'rnc_cedula' && styles.tabItemActive,
-              ]}
-              onPress={() => setLoginMethod('rnc_cedula')}
-              activeOpacity={0.8}
-            >
-              <Building2
-                size={16}
-                color={loginMethod === 'rnc_cedula' ? '#002B66' : '#64748B'}
-                strokeWidth={loginMethod === 'rnc_cedula' ? 2.2 : 1.8}
-              />
-              <Text
-                style={[
-                  styles.tabText,
-                  loginMethod === 'rnc_cedula' && styles.tabTextActive,
-                ]}
-              >
-                Agencia Aduanal
-              </Text>
-            </TouchableOpacity>
+            </View>
           </View>
 
-          {/* Campo Correo o RNC / Cédula dinámico */}
-          {loginMethod === 'email' ? (
-            <View>
-              <Text style={styles.inputLabel}>Correo electrónico</Text>
-              <View style={styles.inputWrapper}>
-                <Mail size={18} color="#94A3B8" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.inputField}
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="ejemplo@agenciaaduanal.com.do"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
+          {/* 2. Declaración */}
+          <View style={[styles.inputGroup, { marginTop: 16 }]}>
+            <Text style={styles.inputLabel}>Declaración</Text>
+            <View style={styles.inputWrapper}>
+              <FileText size={18} color="#94A3B8" style={styles.inputIcon} />
+              <TextInput
+                style={styles.inputField}
+                value={declaracion}
+                onChangeText={setDeclaracion}
+                placeholder="10030-IC01-2608-0025FB"
+                placeholderTextColor="#94A3B8"
+                keyboardType="default"
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
             </View>
-          ) : (
-            <View>
-              <View style={styles.rncLabelRow}>
-                <Text style={styles.inputLabel}>Agencia Aduanal (RNC o Cédula)</Text>
-                <Text style={styles.rncHintText}>9 u 11 dígitos</Text>
-              </View>
-              <View style={styles.inputWrapper}>
-                <Building2 size={18} color="#94A3B8" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.inputField}
-                  value={rncOrCedula}
-                  onChangeText={handleRncOrCedulaChange}
-                  placeholder="130-98765-4 o 001-1234567-8"
-                  placeholderTextColor="#94A3B8"
-                  keyboardType="numeric"
-                  maxLength={13}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-              </View>
-            </View>
-          )}
+          </View>
 
-          {/* Campo Contraseña */}
-          <Text style={[styles.inputLabel, { marginTop: 18 }]}>Contraseña</Text>
-          <View style={styles.inputWrapper}>
-            <Lock size={18} color="#94A3B8" style={styles.inputIcon} />
-            <TextInput
-              style={styles.inputField}
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Ingresa tu contraseña"
-              placeholderTextColor="#94A3B8"
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-            />
-            <TouchableOpacity
-              onPress={() => setShowPassword(!showPassword)}
-              style={styles.eyeButton}
-              activeOpacity={0.7}
-            >
-              {showPassword ? (
-                <EyeOff size={18} color="#94A3B8" />
-              ) : (
-                <Eye size={18} color="#94A3B8" />
-              )}
-            </TouchableOpacity>
+          {/* 3. Campo Contraseña */}
+          <View style={[styles.inputGroup, { marginTop: 16 }]}>
+            <Text style={styles.inputLabel}>Contraseña</Text>
+            <View style={styles.inputWrapper}>
+              <Lock size={18} color="#94A3B8" style={styles.inputIcon} />
+              <TextInput
+                style={styles.inputField}
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Ingresa tu contraseña"
+                placeholderTextColor="#94A3B8"
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity
+                onPress={() => setShowPassword(!showPassword)}
+                style={styles.eyeButton}
+                activeOpacity={0.7}
+              >
+                {showPassword ? (
+                  <EyeOff size={18} color="#94A3B8" />
+                ) : (
+                  <Eye size={18} color="#94A3B8" />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
 
           {/* Enlace Olvidaste tu contraseña */}
@@ -361,38 +313,8 @@ const styles = StyleSheet.create({
   formContainer: {
     width: '100%',
   },
-  tabSelector: {
-    flexDirection: 'row',
-    backgroundColor: '#F1F5F9',
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 20,
-  },
-  tabItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 9,
-    gap: 6,
-  },
-  tabItemActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  tabText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#64748B',
-  },
-  tabTextActive: {
-    color: '#002B66',
-    fontWeight: '700',
+  inputGroup: {
+    width: '100%',
   },
   rncLabelRow: {
     flexDirection: 'row',

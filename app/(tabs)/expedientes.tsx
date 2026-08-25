@@ -41,27 +41,42 @@ export default function ExpedientesScreen() {
   const [activeFilter, setActiveFilter] = useState<FilterTab>('todos');
 
   // Cálculos para las tarjetas de resumen
-  const montoPendiente = pagos
-    .filter((p) => p.estado !== 'pagado')
-    .reduce((sum, p) => sum + (p.montoTotal - p.monto), 0);
+  const fase1SinAbrir = expedientes.filter(
+    (e) => e.estado === 'fase_1_sin_abrir' || e.estado === 'registrado_aceptado' || e.estado === 'pendiente'
+  ).length;
 
-  const listosDespacho = expedientes.filter(
-    (e) => e.estado === 'despacho_aprobado' || e.estado === 'pagado'
-  ).length;
-  const enInspeccion = expedientes.filter(
+  const fase2Verificador = expedientes.filter(
     (e) =>
+      e.estado === 'fase_2_aprobado_verificador' ||
       e.estado === 'inspeccionando' ||
-      e.estado === 'registrado_aceptado' ||
-      e.estado === 'pendiente' ||
-      e.estado === 'revision'
+      e.estado === 'revision' ||
+      e.estado === 'aprobado'
   ).length;
+
+  const fase3Despacho = expedientes.filter(
+    (e) => e.estado === 'fase_3_despacho_aprobado' || e.estado === 'despacho_aprobado' || e.estado === 'pagado'
+  ).length;
+
   const totalExp = expedientes.length;
 
   // Filtrado de expedientes
   const filteredExpedientes = expedientes.filter((exp) => {
-    // Filtro por tab
-    if (activeFilter !== 'todos' && exp.estado !== activeFilter) {
-      return false;
+    // Filtro por tab con compatibilidad de estados equivalentes
+    if (activeFilter !== 'todos') {
+      if (activeFilter === 'fase_1_sin_abrir') {
+        if (exp.estado !== 'fase_1_sin_abrir' && exp.estado !== 'registrado_aceptado' && exp.estado !== 'pendiente') return false;
+      } else if (activeFilter === 'fase_2_aprobado_verificador') {
+        if (
+          exp.estado !== 'fase_2_aprobado_verificador' &&
+          exp.estado !== 'inspeccionando' &&
+          exp.estado !== 'revision' &&
+          exp.estado !== 'aprobado'
+        ) return false;
+      } else if (activeFilter === 'fase_3_despacho_aprobado') {
+        if (exp.estado !== 'fase_3_despacho_aprobado' && exp.estado !== 'despacho_aprobado' && exp.estado !== 'pagado') return false;
+      } else if (exp.estado !== activeFilter) {
+        return false;
+      }
     }
 
     // Filtro por búsqueda
@@ -107,23 +122,23 @@ export default function ExpedientesScreen() {
           contentContainerStyle={styles.summaryRow}
         >
           <Card variant="subtle" style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Pagos Pendientes</Text>
-            <Text style={[styles.summaryValue, { color: '#E65100' }]}>
-              USD ${montoPendiente.toLocaleString()}
+            <Text style={styles.summaryLabel}>Sin Abrir</Text>
+            <Text style={[styles.summaryValue, { color: '#1D4ED8' }]}>
+              {fase1SinAbrir} Expedientes
+            </Text>
+          </Card>
+
+          <Card variant="subtle" style={styles.summaryCard}>
+            <Text style={styles.summaryLabel}>Aprobado Verificador</Text>
+            <Text style={[styles.summaryValue, { color: '#B45309' }]}>
+              {fase2Verificador} Aprobados
             </Text>
           </Card>
 
           <Card variant="subtle" style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Despacho Aprobado</Text>
             <Text style={[styles.summaryValue, { color: COLORS.primaryDark }]}>
-              {listosDespacho} Expedientes
-            </Text>
-          </Card>
-
-          <Card variant="subtle" style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>En Inspección / Aforo</Text>
-            <Text style={[styles.summaryValue, { color: '#1565C0' }]}>
-              {enInspeccion} en Proceso
+              {fase3Despacho} Aprobados
             </Text>
           </Card>
 
@@ -196,30 +211,33 @@ export default function ExpedientesScreen() {
         >
           {([
             'todos',
-            'registrado_aceptado',
-            'inspeccionando',
-            'aprobado',
-            'despacho_aprobado',
+            'fase_1_sin_abrir',
+            'fase_2_aprobado_verificador',
+            'fase_3_despacho_aprobado',
             'rechazado',
           ] as FilterTab[]).map((tab) => {
             const isActive = activeFilter === tab;
             const count =
               tab === 'todos'
                 ? expedientes.length
+                : tab === 'fase_1_sin_abrir'
+                ? fase1SinAbrir
+                : tab === 'fase_2_aprobado_verificador'
+                ? fase2Verificador
+                : tab === 'fase_3_despacho_aprobado'
+                ? fase3Despacho
                 : expedientes.filter((e) => e.estado === tab).length;
 
             const getTabLabel = (t: FilterTab) => {
               switch (t) {
                 case 'todos':
                   return 'Todos';
-                case 'registrado_aceptado':
-                  return 'Registrado/Aceptado';
-                case 'inspeccionando':
-                  return 'Inspeccionando';
-                case 'aprobado':
-                  return 'Aprobado';
-                case 'despacho_aprobado':
-                  return 'Despacho Aprobado';
+                case 'fase_1_sin_abrir':
+                  return 'Sin abrir';
+                case 'fase_2_aprobado_verificador':
+                  return 'Aprobado verificador';
+                case 'fase_3_despacho_aprobado':
+                  return 'Despacho aprobado';
                 case 'rechazado':
                   return 'Rechazado';
                 default:

@@ -50,13 +50,19 @@ export default function DashboardScreen() {
   const totalExp = expedientes.length || 4;
   const pendingExp = expedientes.filter(
     (e) =>
+      e.estado === 'fase_1_sin_abrir' ||
+      e.estado === 'fase_2_aprobado_verificador' ||
       e.estado === 'registrado_aceptado' ||
       e.estado === 'inspeccionando' ||
       e.estado === 'pendiente' ||
       e.estado === 'revision'
   ).length;
   const pagadosExp = expedientes.filter(
-    (e) => e.estado === 'despacho_aprobado' || e.estado === 'aprobado' || e.estado === 'pagado'
+    (e) =>
+      e.estado === 'fase_3_despacho_aprobado' ||
+      e.estado === 'despacho_aprobado' ||
+      e.estado === 'aprobado' ||
+      e.estado === 'pagado'
   ).length;
 
   const totalPagos = pagos.length;

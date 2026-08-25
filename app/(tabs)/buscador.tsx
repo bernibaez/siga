@@ -85,8 +85,21 @@ export default function BuscadorScreen() {
     if (canalSelectivo !== 'todos' && exp.canalControl !== canalSelectivo) {
       return false;
     }
-    if (selectedEstado !== 'todos' && exp.estado !== selectedEstado) {
-      return false;
+    if (selectedEstado !== 'todos') {
+      if (selectedEstado === 'fase_1_sin_abrir') {
+        if (exp.estado !== 'fase_1_sin_abrir' && exp.estado !== 'registrado_aceptado' && exp.estado !== 'pendiente') return false;
+      } else if (selectedEstado === 'fase_2_aprobado_verificador') {
+        if (
+          exp.estado !== 'fase_2_aprobado_verificador' &&
+          exp.estado !== 'inspeccionando' &&
+          exp.estado !== 'revision' &&
+          exp.estado !== 'aprobado'
+        ) return false;
+      } else if (selectedEstado === 'fase_3_despacho_aprobado') {
+        if (exp.estado !== 'fase_3_despacho_aprobado' && exp.estado !== 'despacho_aprobado' && exp.estado !== 'pagado') return false;
+      } else if (exp.estado !== selectedEstado) {
+        return false;
+      }
     }
     return true;
   });
@@ -233,10 +246,9 @@ export default function BuscadorScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillsRow}>
             {[
               'todos',
-              'registrado_aceptado',
-              'inspeccionando',
-              'aprobado',
-              'despacho_aprobado',
+              'fase_1_sin_abrir',
+              'fase_2_aprobado_verificador',
+              'fase_3_despacho_aprobado',
               'rechazado',
             ].map((est) => {
               const isActive = selectedEstado === est;
@@ -244,14 +256,12 @@ export default function BuscadorScreen() {
                 switch (s) {
                   case 'todos':
                     return 'Todos';
-                  case 'registrado_aceptado':
-                    return 'Registrado/Aceptado';
-                  case 'inspeccionando':
-                    return 'Inspeccionando';
-                  case 'aprobado':
-                    return 'Aprobado';
-                  case 'despacho_aprobado':
-                    return 'Despacho Aprobado';
+                  case 'fase_1_sin_abrir':
+                    return 'Fase 1: Sin abrir';
+                  case 'fase_2_aprobado_verificador':
+                    return 'Fase 2: Verificador';
+                  case 'fase_3_despacho_aprobado':
+                    return 'Fase 3: Despacho';
                   case 'rechazado':
                     return 'Rechazado';
                   default:

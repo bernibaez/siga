@@ -35,12 +35,12 @@ interface DataContextType {
 }
 
 const STORAGE_KEYS = {
-  EXPEDIENTES: '@siga_expedientes_v3',
-  IGEAS: '@siga_igeas_v3',
-  IGRAS: '@siga_igras_v3',
-  CARGAS: '@siga_cargas_v3',
-  PAGOS: '@siga_pagos_v3',
-  NOTIFICACIONES: '@siga_notificaciones_v3',
+  EXPEDIENTES: '@siga_expedientes_v4',
+  IGEAS: '@siga_igeas_v4',
+  IGRAS: '@siga_igras_v4',
+  CARGAS: '@siga_cargas_v4',
+  PAGOS: '@siga_pagos_v4',
+  NOTIFICACIONES: '@siga_notificaciones_v4',
 };
 
 const INITIAL_EXPEDIENTES: Expediente[] = [
@@ -62,7 +62,7 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
     depositoDestino: 'TERMINALES HAINA S.A.',
     consignatario: 'CORPORACION MERCANTIL DOMINICANA S.R.L.',
     agencia: 'Agencia Aduanal Dominicana Express',
-    estado: 'registrado_aceptado',
+    estado: 'fase_1_sin_abrir',
     fechaCreacion: '2026-07-14T09:30:00Z',
     fechaActualizacion: '2026-07-15T11:20:00Z',
     valorFOB: 45000,
@@ -105,7 +105,7 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
       },
     ],
     observaciones: [
-      'Declaración registrada y aceptada en Sistema SIGA DGA.',
+      'Declaración registrada sin abrir el expediente.',
       'Asignada a Inspector 00046525 RICARDO GARCIA HERNANDEZ.',
       'S/C: Pantalla de Inspección en Terminales Haina Oriental.',
     ],
@@ -128,7 +128,7 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
     depositoDestino: 'TERMINALES HAINA S.A.',
     consignatario: 'Industrias Nacionales S.A.',
     agencia: 'Servicios Aduaneros Globales RD',
-    estado: 'inspeccionando',
+    estado: 'fase_2_aprobado_verificador',
     fechaCreacion: '2026-07-17T14:15:00Z',
     fechaActualizacion: '2026-07-18T16:00:00Z',
     valorFOB: 28000,
@@ -162,9 +162,9 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
       },
     ],
     observaciones: [
-      'Proceso de inspección física y documental en curso.',
+      'Aprobado por el verificador DGA.',
       'Inspector asignado en patio: RICARDO GARCIA HERNANDEZ.',
-      'Aforo físico en patio de Terminales Haina Oriental.',
+      'Aforo físico conforme en patio de Terminales Haina Oriental.',
     ],
   },
   {
@@ -185,7 +185,7 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
     depositoDestino: 'TERMINALES HAINA S.A.',
     consignatario: 'Corporacion Digital SRL',
     agencia: 'RAISA WENDY NIVAR C...',
-    estado: 'despacho_aprobado',
+    estado: 'fase_3_despacho_aprobado',
     fechaCreacion: '2026-06-05T08:00:00Z',
     fechaActualizacion: '2026-06-08T10:45:00Z',
     valorFOB: 62000,
@@ -210,9 +210,9 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
       },
     ],
     observaciones: [
+      'Despacho Aprobado para retiro en Terminales Haina S.A.',
       'Aforo verde automático liberado por sistema.',
       'Pago liquidado exitosamente mediante débito bancario SIGA.',
-      'Despacho Aprobado para retiro en Terminales Haina S.A.',
     ],
   },
   {
@@ -233,7 +233,7 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
     depositoDestino: 'DP WORLD CAUCEDO TERMINAL',
     consignatario: 'Caribe Import Logistics S.R.L.',
     agencia: 'Servicios Aduaneros Globales RD',
-    estado: 'aprobado',
+    estado: 'fase_2_aprobado_verificador',
     fechaCreacion: '2026-07-08T09:00:00Z',
     fechaActualizacion: '2026-07-09T17:30:00Z',
     valorFOB: 34500,
@@ -248,9 +248,9 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
     },
     documentos: [],
     observaciones: [
-      'Resultado de inspección validado y Aprobado.',
+      'Aprobado por el verificador DGA LIC. MARIA GONZALEZ.',
       'Exoneración arancelaria aplicada conforme Ley 57-07.',
-      'Pendiente de emisión de pase de salida / levante.',
+      'Pendiente de autorización de retiro final.',
     ],
   },
 ];

@@ -39,10 +39,9 @@ import { FileUpload } from '@/components/ui/FileUpload';
 import { Documento, ExpedienteEstado } from '@/types';
 
 const SIGA_STAGES = [
-  { key: 'registrado_aceptado', label: 'Registrado / Aceptado', shortLabel: 'Registrado', desc: 'Declaración admitida' },
-  { key: 'inspeccionando', label: 'Inspeccionando', shortLabel: 'Aforo', desc: 'Inspección física / documental' },
-  { key: 'aprobado', label: 'Aprobado', shortLabel: 'Aprobado', desc: 'Resultado validado' },
-  { key: 'despacho_aprobado', label: 'Despacho Aprobado', shortLabel: 'Despacho', desc: 'Levante autorizado' },
+  { key: 'fase_1_sin_abrir', label: 'Sin abrir el expediente', shortLabel: 'Sin abrir', desc: 'Declaración registrada' },
+  { key: 'fase_2_aprobado_verificador', label: 'Aprobado por el verificador', shortLabel: 'Aprobado verificador', desc: 'Aprobado por el verificador' },
+  { key: 'fase_3_despacho_aprobado', label: 'Despacho aprobado', shortLabel: 'Despacho aprobado', desc: 'Levante autorizado' },
 ];
 
 export default function DetalleExpedienteScreen() {
@@ -84,17 +83,19 @@ export default function DetalleExpedienteScreen() {
 
   const getStageIndex = (estado: string) => {
     switch (estado) {
+      case 'fase_1_sin_abrir':
       case 'registrado_aceptado':
       case 'pendiente':
         return 0;
+      case 'fase_2_aprobado_verificador':
       case 'inspeccionando':
       case 'revision':
-        return 1;
       case 'aprobado':
-        return 2;
+        return 1;
+      case 'fase_3_despacho_aprobado':
       case 'despacho_aprobado':
       case 'pagado':
-        return 3;
+        return 2;
       case 'rechazado':
         return -1;
       default:
@@ -497,37 +498,26 @@ export default function DetalleExpedienteScreen() {
         )}
 
         {/* Barra de Acciones según Rol */}
-        {/* Barra de Acciones según Rol */}
         <View style={styles.actionSection}>
-          {isVerificador && expediente.estado !== 'despacho_aprobado' && expediente.estado !== 'rechazado' && (
+          {isVerificador && currentStageIndex !== 2 && expediente.estado !== 'rechazado' && (
             <View style={styles.verificadorActionsCol}>
               {currentStageIndex === 0 && (
                 <Button
-                  title="Iniciar Inspección / Aforo"
-                  icon={Search}
+                  title="Aprobar por Verificador"
+                  icon={CheckCircle2}
                   variant="primary"
                   size="large"
-                  onPress={() => handleAdvanceStageByVerificador('inspeccionando', 'Inspeccionando')}
+                  onPress={() => handleAdvanceStageByVerificador('fase_2_aprobado_verificador', 'Aprobado por el verificador')}
                   style={{ marginBottom: 8 }}
                 />
               )}
               {currentStageIndex === 1 && (
                 <Button
-                  title="Aprobar Inspección"
-                  icon={CheckCircle2}
-                  variant="success"
-                  size="large"
-                  onPress={() => handleAdvanceStageByVerificador('aprobado', 'Aprobado')}
-                  style={{ marginBottom: 8 }}
-                />
-              )}
-              {currentStageIndex === 2 && (
-                <Button
-                  title="Autorizar Despacho Final"
+                  title="Aprobar Despacho"
                   icon={ShieldCheck}
                   variant="success"
                   size="large"
-                  onPress={() => handleAdvanceStageByVerificador('despacho_aprobado', 'Despacho Aprobado')}
+                  onPress={() => handleAdvanceStageByVerificador('fase_3_despacho_aprobado', 'Despacho aprobado')}
                   style={{ marginBottom: 8 }}
                 />
               )}
@@ -541,7 +531,7 @@ export default function DetalleExpedienteScreen() {
             </View>
           )}
 
-          {isImportador && expediente.estado !== 'despacho_aprobado' && expediente.estado !== 'pagado' && (
+          {isImportador && currentStageIndex !== 2 && (
             <Button
               title="Ir a Pagar Impuestos"
               icon={CreditCard}

@@ -12,10 +12,15 @@ import {
   Search,
   FileText,
   ShieldCheck,
+  FolderLock,
+  UserCheck,
 } from 'lucide-react-native';
 import { STATUS_COLORS } from '@/theme/colors';
 
 type AnyStatus =
+  | 'fase_1_sin_abrir'
+  | 'fase_2_aprobado_verificador'
+  | 'fase_3_despacho_aprobado'
   | 'registrado_aceptado'
   | 'registrado/aceptado'
   | 'inspeccionando'
@@ -63,16 +68,20 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
     const color = config.text;
 
     switch (normStatus) {
+      case 'fase_1_sin_abrir':
       case 'registrado_aceptado':
       case 'registrado/aceptado':
         return <FileText size={iconSize} color={color} style={styles.icon} />;
+      case 'fase_2_aprobado_verificador':
+        return <UserCheck size={iconSize} color={color} style={styles.icon} />;
+      case 'fase_3_despacho_aprobado':
+      case 'despacho_aprobado':
+      case 'despacho aprobado':
+        return <ShieldCheck size={iconSize} color={color} style={styles.icon} />;
       case 'inspeccionando':
         return <Search size={iconSize} color={color} style={styles.icon} />;
       case 'aprobado':
         return <CheckCircle2 size={iconSize} color={color} style={styles.icon} />;
-      case 'despacho_aprobado':
-      case 'despacho aprobado':
-        return <ShieldCheck size={iconSize} color={color} style={styles.icon} />;
       case 'pendiente':
         return <Clock size={iconSize} color={color} style={styles.icon} />;
       case 'revision':

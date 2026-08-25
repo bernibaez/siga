@@ -38,18 +38,23 @@ export const COLORS = {
 };
 
 export const STATUS_COLORS = {
-  // Fases Oficiales SIGA DGA
-  registrado_aceptado: { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE', label: 'Registrado/Aceptado' },
-  'registrado/aceptado': { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE', label: 'Registrado/Aceptado' },
-  inspeccionando: { bg: '#FEF3C7', text: '#B45309', border: '#FDE68A', label: 'Inspeccionando' },
-  aprobado: { bg: '#ECFDF5', text: '#047857', border: '#A7F3D0', label: 'Aprobado' },
-  despacho_aprobado: { bg: '#D1FAE5', text: '#065F46', border: '#6EE7B7', label: 'Despacho Aprobado' },
-  'despacho aprobado': { bg: '#D1FAE5', text: '#065F46', border: '#6EE7B7', label: 'Despacho Aprobado' },
+  // Estados Oficiales de Gestión de Expedientes
+  fase_1_sin_abrir: { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE', label: 'Sin abrir el expediente' },
+  fase_2_aprobado_verificador: { bg: '#FEF3C7', text: '#B45309', border: '#FDE68A', label: 'Aprobado por el verificador' },
+  fase_3_despacho_aprobado: { bg: '#D1FAE5', text: '#065F46', border: '#6EE7B7', label: 'Despacho aprobado' },
+
+  // Compatibilidad con registros existentes
+  registrado_aceptado: { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE', label: 'Sin abrir el expediente' },
+  'registrado/aceptado': { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE', label: 'Sin abrir el expediente' },
+  inspeccionando: { bg: '#FEF3C7', text: '#B45309', border: '#FDE68A', label: 'Aprobado por el verificador' },
+  aprobado: { bg: '#FEF3C7', text: '#B45309', border: '#FDE68A', label: 'Aprobado por el verificador' },
+  despacho_aprobado: { bg: '#D1FAE5', text: '#065F46', border: '#6EE7B7', label: 'Despacho aprobado' },
+  'despacho aprobado': { bg: '#D1FAE5', text: '#065F46', border: '#6EE7B7', label: 'Despacho aprobado' },
 
   // Expedientes / Compatibilidad
-  pendiente: { bg: '#FEF3C7', text: '#B45309', border: '#FDE68A', label: 'Pendiente' },
-  revision: { bg: '#DBEAFE', text: '#1D4ED8', border: '#BFDBFE', label: 'En Revisión' },
-  pagado: { bg: '#D1FAE5', text: '#065F46', border: '#A7F3D0', label: 'Pagado' },
+  pendiente: { bg: '#EFF6FF', text: '#1D4ED8', border: '#BFDBFE', label: 'Sin abrir el expediente' },
+  revision: { bg: '#FEF3C7', text: '#B45309', border: '#FDE68A', label: 'Aprobado por el verificador' },
+  pagado: { bg: '#D1FAE5', text: '#065F46', border: '#6EE7B7', label: 'Despacho aprobado' },
   rechazado: { bg: '#FEE2E2', text: '#B91C1C', border: '#FECACA', label: 'Rechazado' },
 
   // IGEA

@@ -86,7 +86,7 @@ export default function NuevoExpedienteScreen() {
         importadorNombre: user?.name || 'Importador Registrado',
         consignatario,
         agencia,
-        estado: 'registrado_aceptado',
+        estado: 'fase_1_sin_abrir',
         valorFOB: numericFOB,
         valorCIF: numericCIF,
         peso: numericPeso,

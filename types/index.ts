@@ -23,6 +23,9 @@ export interface Documento {
 }
 
 export type ExpedienteEstado =
+  | 'fase_1_sin_abrir'
+  | 'fase_2_aprobado_verificador'
+  | 'fase_3_despacho_aprobado'
   | 'registrado_aceptado'
   | 'inspeccionando'
   | 'aprobado'
