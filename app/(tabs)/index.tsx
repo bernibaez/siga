@@ -7,36 +7,57 @@ import {
   TouchableOpacity,
   RefreshControl,
   Platform,
-  Image,
+  Modal,
+  Alert,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
   Bell,
   CreditCard,
-  Calendar,
   ArrowRight,
   ShieldCheck,
   FileText,
-  Laptop,
-  FileCheck,
+  Paperclip,
+  Plus,
+  Truck,
+  CheckCircle2,
+  Clock,
+  Building,
+  UploadCloud,
+  X,
+  DollarSign,
+  Receipt,
+  FileSpreadsheet,
+  ChevronRight,
 } from 'lucide-react-native';
-import Svg, { Circle } from 'react-native-svg';
+import * as DocumentPicker from 'expo-document-picker';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { COLORS } from '@/theme/colors';
 import { Card } from '@/components/ui/Card';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import { Button } from '@/components/ui/Button';
+import { Documento } from '@/types';
 
 export default function DashboardScreen() {
   const { user, isImportador } = useAuth();
   const {
     expedientes,
     pagos,
-    igeas,
     igras,
     notificaciones,
     marcarTodasNotificacionesLeidas,
+    addDocumentoToExpediente,
   } = useData();
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedAgencia, setSelectedAgencia] = useState<string>('todas');
+  const [uploadModalVisible, setUploadModalVisible] = useState(false);
+  const [selectedExpedienteId, setSelectedExpedienteId] = useState<string>('');
+  const [docCategory, setDocCategory] = useState<'factura' | 'declaracion' | 'pago' | 'bl' | 'otro'>('factura');
+  const [customDocName, setCustomDocName] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+
   const router = useRouter();
 
   const onRefresh = () => {
@@ -46,17 +67,14 @@ export default function DashboardScreen() {
     }, 600);
   };
 
-  // Métricas calculadas
-  const totalExp = expedientes.length || 4;
-  const pendingExp = expedientes.filter(
-    (e) =>
-      e.estado === 'fase_1_sin_abrir' ||
-      e.estado === 'fase_2_aprobado_verificador' ||
-      e.estado === 'registrado_aceptado' ||
-      e.estado === 'inspeccionando' ||
-      e.estado === 'pendiente' ||
-      e.estado === 'revision'
-  ).length;
+  // Métricas
+  const totalExp = expedientes.length || 3;
+  const totalDocumentos = expedientes.reduce((sum, exp) => sum + (exp.documentos?.length || 0), 0);
+  const totalFacturas = expedientes.reduce(
+    (sum, exp) => sum + (exp.documentos?.filter((d) => d.categoria === 'factura' || d.nombre.toLowerCase().includes('factura')).length || 0),
+    0
+  );
+
   const pagadosExp = expedientes.filter(
     (e) =>
       e.estado === 'fase_3_despacho_aprobado' ||
@@ -65,83 +83,93 @@ export default function DashboardScreen() {
       e.estado === 'pagado'
   ).length;
 
-  const totalPagos = pagos.length;
   const pendingPagos = pagos.filter((p) => p.estado !== 'pagado').length;
   const montoPendiente = pagos
     .filter((p) => p.estado !== 'pagado')
     .reduce((sum, p) => sum + (p.montoTotal - p.monto), 0);
 
-  const igeaIncompletos = igeas.filter((i) => i.estado === 'incompleto').length;
-  const igeaCompletos = igeas.length > 0 ? igeas.length - igeaIncompletos : 2;
-  const igraAprobados = igras.filter((i) => i.estado === 'aprobado').length || 1;
-
   const unreadNotifs = notificaciones.filter((n) => !n.leida);
 
-  // Cálculo de progreso porcentual
-  const expProgress = totalExp > 0 ? Math.round((pagadosExp / totalExp) * 100) : 100;
-  const igeaProgress = igeas.length > 0 ? Math.round((igeaCompletos / igeas.length) * 100) : 66;
-  const igraProgress = igras.length > 0 ? Math.round((igraAprobados / (igras.length || 3)) * 100) : 33;
+  // Agencias únicas para el filtro
+  const agenciasList = ['todas', ...Array.from(new Set(expedientes.map((e) => e.agencia)))];
 
-  // Parámetros para el Gauge Circular de SVG
-  const circleSize = 100;
-  const strokeWidth = 8;
-  const radius = (circleSize - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (circumference * (expProgress || 100)) / 100;
+  // Expedientes para el dashboard (máximo 3)
+  const expedientesDashboard = expedientes
+    .filter((e) => selectedAgencia === 'todas' || e.agencia === selectedAgencia)
+    .slice(0, 3);
 
-  // Lista de Trámites en proceso para el carrusel
-  const tramitesProceso = [
-    {
-      id: '1',
-      iconType: 'calendar',
-      iconBg: '#E8F5E9',
-      iconColor: '#2E7D32',
-      titulo: 'Zoom meet con cliente Nueva York',
-      horario: '08:00 - 10:00',
-      estado: 'En curso',
-      badgeBg: '#E8F5E9',
-      badgeColor: '#1B7F38',
-      hasAvatars: true,
-    },
-    {
-      id: '2',
-      iconType: 'laptop',
-      iconBg: '#FFF3E0',
-      iconColor: '#E67E22',
-      titulo: 'Explorar App de Diseño',
-      horario: '11:00 - 12:00',
-      estado: 'Pendiente',
-      badgeBg: '#FFF3E0',
-      badgeColor: '#D97706',
-      hasAvatars: false,
-    },
-    {
-      id: '3',
-      iconType: 'document',
-      iconBg: '#F3E8FF',
-      iconColor: '#8B5CF6',
-      titulo: 'Revisión de documentos',
-      horario: '14:00 - 15:00',
-      estado: 'Pendiente',
-      badgeBg: '#F3E8FF',
-      badgeColor: '#7C3AED',
-      hasAvatars: false,
-    },
-  ];
+  // Abrir modal de carga
+  const handleOpenUploadModal = (expId?: string) => {
+    setSelectedExpedienteId(expId || expedientes[0]?.id || '');
+    setCustomDocName('');
+    setDocCategory('factura');
+    setUploadModalVisible(true);
+  };
+
+  // Procesar carga de archivo
+  const handlePickAndUpload = async () => {
+    if (!selectedExpedienteId) {
+      Alert.alert('Selección requerida', 'Por favor selecciona un expediente.');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg'],
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        const categoryLabel =
+          docCategory === 'factura'
+            ? 'Factura'
+            : docCategory === 'declaracion'
+            ? 'DUA'
+            : docCategory === 'pago'
+            ? 'Comprobante_Pago'
+            : docCategory === 'bl'
+            ? 'BL_Guia'
+            : 'Documento';
+
+        const finalName = customDocName.trim()
+          ? `${customDocName.trim()}.${asset.name.split('.').pop() || 'pdf'}`
+          : `${categoryLabel}_${asset.name}`;
+
+        const newDoc: Documento = {
+          id: `doc-${Date.now()}`,
+          nombre: finalName,
+          tipo: asset.mimeType || 'application/pdf',
+          categoria: docCategory,
+          url: asset.uri,
+          fechaSubida: new Date().toISOString(),
+          subidoPor: user?.name || 'Importador SIGA',
+          size: asset.size || 512000,
+        };
+
+        await addDocumentoToExpediente(selectedExpedienteId, newDoc);
+        setUploadModalVisible(false);
+        Alert.alert('Documento Adjuntado', `"${newDoc.nombre}" se adjuntó correctamente.`);
+      }
+    } catch (error) {
+      console.error('Error al subir documento:', error);
+      Alert.alert('Error', 'No se pudo cargar el archivo.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {/* Header Superior Minimalista */}
+      {/* Header Minimalista */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <ShieldCheck size={26} color={COLORS.primary} strokeWidth={2.2} />
-          <View style={styles.titleRow}>
-            <Text style={styles.brandTitle}>SIGA</Text>
-            <Text style={styles.flagEmoji}>🇩🇴</Text>
-          </View>
+          <ShieldCheck size={24} color={COLORS.primaryDark} strokeWidth={2.2} />
+          <Text style={styles.brandTitle}>SIGA</Text>
           <View style={styles.roleTag}>
             <Text style={styles.roleTagText}>
-              {isImportador ? 'Importador OEA' : 'Oficial Verificador DGA'}
+              {isImportador ? 'Importador' : 'Verificador'}
             </Text>
           </View>
         </View>
@@ -151,239 +179,368 @@ export default function DashboardScreen() {
           style={styles.bellButton}
           activeOpacity={0.7}
         >
-          <Bell size={22} color={COLORS.textPrimary} strokeWidth={1.8} />
+          <Bell size={20} color={COLORS.textPrimary} strokeWidth={1.8} />
           {unreadNotifs.length > 0 && <View style={styles.notifDot} />}
         </TouchableOpacity>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primary]} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[COLORS.primaryDark]} />}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Saludo Limpio */}
-        <View style={styles.heroSection}>
+        {/* Saludo Breve */}
+        <View style={styles.greetingBox}>
           <Text style={styles.greetingText}>
             Hola, {user?.name?.split(' ')[0] || 'Ricardo'} 👋
           </Text>
-          <Text style={styles.welcomeSubtitle}>
-            {isImportador
-              ? 'Monitorea tus declaraciones y liquidaciones aduaneras en tiempo real.'
-              : 'Gestión y aforo de expedientes asignados para despacho aduanal.'}
-          </Text>
+          <Text style={styles.greetingSub}>Panel de Control Aduanero</Text>
         </View>
 
-        {/* Banner Principal Verde Oscuro con Medidor Circular */}
-        <View style={styles.bannerHeroCard}>
-          <View style={styles.bannerLeft}>
-            <Text style={styles.bannerSubLabel}>Expedientes pendientes</Text>
-            <Text style={styles.bannerBigNumber}>{pendingExp}</Text>
-            <Text style={styles.bannerDetail}>De {totalExp} registrados</Text>
-
-            <TouchableOpacity
-              style={styles.bannerButton}
-              onPress={() => router.push('/(tabs)/expedientes')}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.bannerButtonText}>Ver expedientes</Text>
-              <ArrowRight size={14} color="#1D4230" strokeWidth={2.5} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.bannerRight}>
-            <View style={styles.gaugeWrapper}>
-              <Svg width={circleSize} height={circleSize} viewBox={`0 0 ${circleSize} ${circleSize}`}>
-                {/* Círculo base tenue */}
-                <Circle
-                  cx={circleSize / 2}
-                  cy={circleSize / 2}
-                  r={radius}
-                  stroke="rgba(255, 255, 255, 0.18)"
-                  strokeWidth={strokeWidth}
-                  fill="none"
-                />
-                {/* Arco de progreso verde brillante */}
-                <Circle
-                  cx={circleSize / 2}
-                  cy={circleSize / 2}
-                  r={radius}
-                  stroke="#86EFAC"
-                  strokeWidth={strokeWidth}
-                  strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
-                  strokeLinecap="round"
-                  fill="none"
-                  transform={`rotate(-90 ${circleSize / 2} ${circleSize / 2})`}
-                />
-              </Svg>
-
-              <View style={styles.gaugeInnerContent}>
-                <Text style={styles.gaugePercent}>{expProgress}%</Text>
-                <Text style={styles.gaugeLabel}>Completados</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Sección: Métricas de Operación */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Métricas de Operación</Text>
-          <View style={styles.dateSubtitleRow}>
-            <Calendar size={13} color={COLORS.textMuted} />
-            <Text style={styles.sectionSubtitle}>Enero 2025 · Recintos Portuarios RD</Text>
-          </View>
-        </View>
-
+        {/* 1. Tarjetas Principales en Grid Minimalista (2 Columnas) */}
         <View style={styles.kpiGrid}>
-          {/* Card 1: Expedientes Pendientes */}
-          <Card
-            variant="default"
-            style={styles.kpiCard}
-            onPress={() => router.push('/(tabs)/expedientes')}
+          {/* Tarjeta: Documentos Adjuntos */}
+          <TouchableOpacity
+            style={styles.cleanCard}
+            onPress={() => handleOpenUploadModal()}
+            activeOpacity={0.8}
           >
-            <View style={[styles.kpiIconBox, { backgroundColor: '#E8F5E9' }]}>
-              <FileText size={18} color={COLORS.primary} strokeWidth={2} />
+            <View style={styles.cardHeaderRow}>
+              <View style={[styles.iconBox, { backgroundColor: '#F0F9FF' }]}>
+                <Paperclip size={18} color="#0284C7" strokeWidth={2} />
+              </View>
+              <View style={styles.miniPillBlue}>
+                <Plus size={10} color="#0284C7" strokeWidth={3} />
+                <Text style={styles.miniPillBlueText}>Adjuntar</Text>
+              </View>
             </View>
-            <Text style={styles.kpiNumber}>{pendingExp}</Text>
-            <Text style={styles.kpiTitle}>Expedientes Pendientes</Text>
-            <Text style={styles.kpiSub}>De {totalExp} registrados</Text>
-          </Card>
+            <Text style={styles.cleanCardNumber}>{totalDocumentos}</Text>
+            <Text style={styles.cleanCardTitle}>Documentos Adjuntos</Text>
+            <Text style={styles.cleanCardSub}>{totalFacturas} facturas · {totalExp} DUA</Text>
+          </TouchableOpacity>
 
-          {/* Card 2: Pagos por Liquidar */}
-          <Card
-            variant="default"
-            style={styles.kpiCard}
+          {/* Tarjeta: Balance a Pagar de Impuestos */}
+          <TouchableOpacity
+            style={styles.cleanCard}
             onPress={() => router.push('/(tabs)/pagos')}
+            activeOpacity={0.8}
           >
-            <View style={[styles.kpiIconBox, { backgroundColor: '#FFF3E0' }]}>
-              <CreditCard size={18} color="#E67E22" strokeWidth={2} />
+            <View style={styles.cardHeaderRow}>
+              <View style={[styles.iconBox, { backgroundColor: '#FEF2F2' }]}>
+                <CreditCard size={18} color="#DC2626" strokeWidth={2} />
+              </View>
+              <View style={styles.miniPillRed}>
+                <Text style={styles.miniPillRedText}>{pendingPagos} por pagar</Text>
+              </View>
             </View>
-            <Text style={styles.kpiNumber}>{pendingPagos}</Text>
-            <Text style={styles.kpiTitle}>Pagos por Liquidar</Text>
-            <Text style={styles.kpiSub}>USD ${montoPendiente.toLocaleString()}</Text>
-          </Card>
+            <Text style={[styles.cleanCardNumber, { color: '#DC2626' }]}>
+              ${montoPendiente >= 1000 ? `${(montoPendiente / 1000).toFixed(1)}k` : montoPendiente}
+            </Text>
+            <Text style={styles.cleanCardTitle}>Balance Impuestos</Text>
+            <Text style={styles.cleanCardSub}>USD ${montoPendiente.toLocaleString()}</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Sección: Estado de Flujos Aduaneros */}
-        <View style={styles.progressSection}>
-          <Text style={styles.sectionTitle}>Estado de Flujos Aduaneros</Text>
-          <Card variant="default" style={styles.progressCard}>
-            {/* Flujo 1: Expedientes Completados */}
-            <View style={styles.progressItem}>
-              <View style={styles.progressRow}>
-                <Text style={styles.progressLabel}>Expedientes Completados</Text>
-                <Text style={styles.progressPercent}>{expProgress}%</Text>
-              </View>
-              <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: `${expProgress}%`, backgroundColor: '#2E7D32' }]} />
-              </View>
+        {/* Tarjeta Resumen: Estado de Impuestos y Expedientes */}
+        <TouchableOpacity
+          style={styles.summaryBarCard}
+          onPress={() => router.push('/(tabs)/pagos')}
+          activeOpacity={0.8}
+        >
+          <View style={styles.summaryBarLeft}>
+            <View style={[styles.iconBoxSmall, { backgroundColor: '#EAF7EE' }]}>
+              <Receipt size={16} color="#1B7F38" strokeWidth={2} />
             </View>
-
-            {/* Flujo 2: Entrada Aduanera (IGEA) */}
-            <View style={styles.progressItem}>
-              <View style={styles.progressRow}>
-                <Text style={styles.progressLabel}>Entrada Aduanera (IGEA)</Text>
-                <Text style={styles.progressPercent}>
-                  {igeaCompletos} de {igeas.length || 3}
-                </Text>
-              </View>
-              <View style={styles.progressBarBg}>
-                <View
-                  style={[
-                    styles.progressBarFill,
-                    {
-                      width: `${igeaProgress}%`,
-                      backgroundColor: '#1976D2',
-                    },
-                  ]}
-                />
-              </View>
+            <View>
+              <Text style={styles.summaryBarTitle}>Estado de Impuestos</Text>
+              <Text style={styles.summaryBarSub}>
+                {pagadosExp} de {totalExp} expedientes liquidados
+              </Text>
             </View>
+          </View>
+          <View style={styles.summaryBarRight}>
+            <Text style={styles.summaryBarPercent}>
+              {Math.round((pagadosExp / totalExp) * 100)}%
+            </Text>
+            <ChevronRight size={16} color={COLORS.textMuted} />
+          </View>
+        </TouchableOpacity>
 
-            {/* Flujo 3: Autorización Retiro (IGRA) */}
-            <View style={[styles.progressItem, { marginBottom: 0 }]}>
-              <View style={styles.progressRow}>
-                <Text style={styles.progressLabel}>Autorización Retiro (IGRA)</Text>
-                <Text style={styles.progressPercent}>
-                  {igraAprobados} de {igras.length || 3}
-                </Text>
-              </View>
-              <View style={styles.progressBarBg}>
-                <View
-                  style={[
-                    styles.progressBarFill,
-                    {
-                      width: `${igraProgress}%`,
-                      backgroundColor: '#2E7D32',
-                    },
-                  ]}
-                />
-              </View>
-            </View>
-          </Card>
-        </View>
-
-        {/* Sección: Trámites en Proceso (Carrusel Horizontal de Tarjetas) */}
-        <View style={styles.featuredSection}>
-          <View style={styles.featuredHeaderRow}>
-            <Text style={styles.sectionTitle}>Trámites en Proceso</Text>
+        {/* 2. Sección: Actualización de Despacho (IGRA) */}
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Actualización de despacho (IGRA)</Text>
             <TouchableOpacity onPress={() => router.push('/(tabs)/modulos')}>
-              <Text style={styles.seeAllText}>Ver todos</Text>
+              <Text style={styles.linkText}>Ver todos</Text>
             </TouchableOpacity>
           </View>
 
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tramitesCarousel}
+            contentContainerStyle={styles.horizontalScroll}
           >
-            {tramitesProceso.map((tramite) => (
-              <View key={tramite.id} style={styles.tramiteCard}>
-                <View style={[styles.tramiteIconBox, { backgroundColor: tramite.iconBg }]}>
-                  {tramite.iconType === 'calendar' && (
-                    <Calendar size={16} color={tramite.iconColor} strokeWidth={2} />
-                  )}
-                  {tramite.iconType === 'laptop' && (
-                    <Laptop size={16} color={tramite.iconColor} strokeWidth={2} />
-                  )}
-                  {tramite.iconType === 'document' && (
-                    <FileCheck size={16} color={tramite.iconColor} strokeWidth={2} />
-                  )}
-                </View>
+            {igras.map((igraItem) => {
+              const exp = expedientes.find((e) => e.id === igraItem.expedienteId);
+              const isApproved = igraItem.estado === 'aprobado';
 
-                <Text style={styles.tramiteTitle} numberOfLines={2}>
-                  {tramite.titulo}
-                </Text>
-                <Text style={styles.tramiteHorario}>{tramite.horario}</Text>
-
-                <View style={styles.tramiteFooter}>
-                  {tramite.hasAvatars ? (
-                    <View style={styles.avatarStack}>
-                      <View style={[styles.avatarCircle, { backgroundColor: '#3B82F6' }]}>
-                        <Text style={styles.avatarText}>JD</Text>
-                      </View>
-                      <View style={[styles.avatarCircle, { backgroundColor: '#10B981', marginLeft: -8 }]}>
-                        <Text style={styles.avatarText}>AL</Text>
-                      </View>
-                      <View style={[styles.avatarCircle, { backgroundColor: '#F59E0B', marginLeft: -8 }]}>
-                        <Text style={styles.avatarText}>RM</Text>
-                      </View>
-                    </View>
-                  ) : (
-                    <View />
-                  )}
-
-                  <View style={[styles.tramiteBadge, { backgroundColor: tramite.badgeBg }]}>
-                    <Text style={[styles.tramiteBadgeText, { color: tramite.badgeColor }]}>
-                      {tramite.estado}
+              return (
+                <TouchableOpacity
+                  key={igraItem.id}
+                  style={styles.igraCardMinimal}
+                  onPress={() => exp && router.push(`/expedientes/${exp.id}` as any)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.igraTopRow}>
+                    <View
+                      style={[
+                        styles.statusDot,
+                        { backgroundColor: isApproved ? '#10B981' : '#F59E0B' },
+                      ]}
+                    />
+                    <Text
+                      style={[
+                        styles.igraStatusText,
+                        { color: isApproved ? '#059669' : '#D97706' },
+                      ]}
+                    >
+                      {isApproved ? 'Despacho Autorizado' : 'Pendiente IGRA'}
                     </Text>
                   </View>
-                </View>
-              </View>
-            ))}
+
+                  <Text style={styles.igraExpText}>{exp?.numero || 'EXP-2026'}</Text>
+                  <Text style={styles.igraCompanyText} numberOfLines={1}>
+                    {exp?.consignatario || exp?.importadorNombre || 'Empresa'}
+                  </Text>
+
+                  <View style={styles.igraBottomRow}>
+                    <Text style={styles.igraAdminText} numberOfLines={1}>
+                      🏢 {exp?.administracion ? exp.administracion.split('-')[1]?.trim() || exp.administracion : 'Haina Oriental'}
+                    </Text>
+                    <ArrowRight size={12} color={COLORS.textMuted} />
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </View>
+
+        {/* 3. Sección: Historial de Expedientes Recientes */}
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Historial de Expedientes</Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/expedientes')}>
+              <Text style={styles.linkText}>Ver todos ({totalExp})</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Filtro Minimalista por Agencia */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.agencyPillContainer}
+          >
+            {agenciasList.map((ag) => {
+              const isSelected = selectedAgencia === ag;
+              const label =
+                ag === 'todas'
+                  ? 'Todas'
+                  : ag.length > 20
+                  ? ag.slice(0, 18) + '...'
+                  : ag;
+
+              return (
+                <TouchableOpacity
+                  key={ag}
+                  onPress={() => setSelectedAgencia(ag)}
+                  style={[styles.pill, isSelected && styles.pillActive]}
+                >
+                  <Text style={[styles.pillText, isSelected && styles.pillTextActive]}>
+                    {label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+
+          {/* Tarjetas de Expedientes (2 a 3) */}
+          <View style={styles.expedientesColumn}>
+            {expedientesDashboard.map((exp) => {
+              const pagoAsociado = pagos.find((p) => p.expedienteId === exp.id);
+              const balancePagar = pagoAsociado
+                ? pagoAsociado.montoTotal - pagoAsociado.monto
+                : exp.impuestos.total;
+              const estadoPago = pagoAsociado?.estado || 'pendiente';
+
+              return (
+                <TouchableOpacity
+                  key={exp.id}
+                  style={styles.expCardMinimal}
+                  onPress={() => router.push(`/expedientes/${exp.id}` as any)}
+                  activeOpacity={0.85}
+                >
+                  {/* Fila 1: Número de Expediente y Estado de Pago */}
+                  <View style={styles.expHeaderRow}>
+                    <View style={styles.expTitleCol}>
+                      <Text style={styles.expNumText}>{exp.numero}</Text>
+                      <Text style={styles.expDuaText}>DUA: {exp.declaracion}</Text>
+                    </View>
+                    <StatusBadge status={estadoPago} size="small" />
+                  </View>
+
+                  {/* Fila 2: Empresa y Agencia */}
+                  <View style={styles.expInfoBlock}>
+                    <Text style={styles.expCompany} numberOfLines={1}>
+                      {exp.consignatario || exp.importadorNombre}
+                    </Text>
+                    <Text style={styles.expAgency} numberOfLines={1}>
+                      🏢 {exp.agencia}
+                    </Text>
+                  </View>
+
+                  {/* Fila 3: Balance de Impuestos */}
+                  <View style={styles.expBalanceRow}>
+                    <Text style={styles.expBalanceLabel}>Balance a pagar de impuestos:</Text>
+                    <Text
+                      style={[
+                        styles.expBalanceValue,
+                        balancePagar > 0 ? { color: '#DC2626' } : { color: '#059669' },
+                      ]}
+                    >
+                      USD ${balancePagar.toLocaleString()}
+                    </Text>
+                  </View>
+
+                  {/* Fila 4: Documentos y Botón Adjuntar */}
+                  <View style={styles.expDocsRow}>
+                    <View style={styles.docChipsWrap}>
+                      {exp.documentos && exp.documentos.length > 0 ? (
+                        exp.documentos.slice(0, 2).map((d) => (
+                          <View key={d.id} style={styles.docBadge}>
+                            <FileText size={10} color="#0284C7" />
+                            <Text style={styles.docBadgeText} numberOfLines={1}>
+                              {d.nombre.length > 16 ? d.nombre.slice(0, 14) + '..' : d.nombre}
+                            </Text>
+                          </View>
+                        ))
+                      ) : (
+                        <Text style={styles.noDocsText}>Sin facturas</Text>
+                      )}
+                      {(exp.documentos?.length || 0) > 2 && (
+                        <Text style={styles.moreDocsText}>+{(exp.documentos?.length || 0) - 2}</Text>
+                      )}
+                    </View>
+
+                    <TouchableOpacity
+                      style={styles.attachBtnMinimal}
+                      onPress={() => handleOpenUploadModal(exp.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Plus size={11} color={COLORS.primaryDark} strokeWidth={2.5} />
+                      <Text style={styles.attachBtnMinimalText}>Adjuntar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
       </ScrollView>
+
+      {/* Modal Minimalista para Adjuntar Facturas / Documentos */}
+      <Modal visible={uploadModalVisible} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Adjuntar Factura / Documento</Text>
+                <Text style={styles.modalSub}>Selecciona el expediente y categoría</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setUploadModalVisible(false)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <X size={20} color={COLORS.textPrimary} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {/* Selector de Expediente */}
+              <Text style={styles.modalFieldLabel}>Expediente</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.modalExpPicker}>
+                {expedientes.map((e) => {
+                  const isSelected = selectedExpedienteId === e.id;
+                  return (
+                    <TouchableOpacity
+                      key={e.id}
+                      onPress={() => setSelectedExpedienteId(e.id)}
+                      style={[styles.modalPill, isSelected && styles.modalPillActive]}
+                    >
+                      <Text style={[styles.modalPillText, isSelected && styles.modalPillTextActive]}>
+                        {e.numero}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+
+              {/* Categorías */}
+              <Text style={styles.modalFieldLabel}>Tipo</Text>
+              <View style={styles.categoryRow}>
+                {[
+                  { key: 'factura', label: 'Factura Comercial' },
+                  { key: 'declaracion', label: 'DUA' },
+                  { key: 'pago', label: 'Pago' },
+                  { key: 'bl', label: 'B/L' },
+                ].map((c) => {
+                  const isSelected = docCategory === c.key;
+                  return (
+                    <TouchableOpacity
+                      key={c.key}
+                      onPress={() => setDocCategory(c.key as any)}
+                      style={[styles.catPill, isSelected && styles.catPillActive]}
+                    >
+                      <Text style={[styles.catPillText, isSelected && styles.catPillTextActive]}>
+                        {c.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Nombre Opcional */}
+              <Text style={styles.modalFieldLabel}>Nombre Personalizado (Opcional)</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={customDocName}
+                onChangeText={setCustomDocName}
+                placeholder="Ej: Factura_001"
+                placeholderTextColor={COLORS.textMuted}
+              />
+
+              {/* Botón Seleccionar Archivo */}
+              <TouchableOpacity
+                style={styles.uploadArea}
+                onPress={handlePickAndUpload}
+                activeOpacity={0.8}
+                disabled={isUploading}
+              >
+                <UploadCloud size={24} color={COLORS.primaryDark} />
+                <Text style={styles.uploadAreaTitle}>
+                  {isUploading ? 'Procesando...' : 'Seleccionar PDF o Imagen'}
+                </Text>
+              </TouchableOpacity>
+            </ScrollView>
+
+            <TouchableOpacity
+              style={styles.modalCloseBtn}
+              onPress={() => setUploadModalVisible(false)}
+            >
+              <Text style={styles.modalCloseBtnText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -391,7 +548,7 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: '#F8FAFC',
   },
   header: {
     flexDirection: 'row',
@@ -399,34 +556,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'ios' ? 56 : 40,
-    paddingBottom: 14,
-    backgroundColor: COLORS.background,
+    paddingBottom: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
   brandTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: COLORS.textPrimary,
+    color: '#0F172A',
     letterSpacing: 0.5,
-  },
-  flagEmoji: {
-    fontSize: 15,
-    marginLeft: 2,
   },
   roleTag: {
     backgroundColor: '#EAF7EE',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
     marginLeft: 4,
   },
   roleTagText: {
@@ -435,8 +585,8 @@ const styles = StyleSheet.create({
     color: '#1B7F38',
   },
   bellButton: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -445,286 +595,473 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 6,
     right: 6,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#10B981',
     borderRadius: 4,
-    width: 8,
-    height: 8,
+    width: 7,
+    height: 7,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 110,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 100,
   },
-  heroSection: {
-    marginTop: 8,
+  greetingBox: {
     marginBottom: 14,
   },
   greetingText: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '800',
-    color: COLORS.textPrimary,
-    letterSpacing: -0.5,
+    color: '#0F172A',
+    letterSpacing: -0.4,
   },
-  welcomeSubtitle: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginTop: 6,
-    lineHeight: 20,
-  },
-  bannerHeroCard: {
-    backgroundColor: '#24513B',
-    borderRadius: 22,
-    padding: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
-    marginBottom: 8,
-    shadowColor: '#1B3B2B',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    elevation: 3,
-  },
-  bannerLeft: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  bannerSubLabel: {
-    color: 'rgba(255, 255, 255, 0.85)',
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  bannerBigNumber: {
-    color: '#FFFFFF',
-    fontSize: 32,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  bannerDetail: {
-    color: 'rgba(255, 255, 255, 0.75)',
+  greetingSub: {
     fontSize: 12,
-    marginBottom: 14,
-  },
-  bannerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-  },
-  bannerButtonText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#1D4230',
-  },
-  bannerRight: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 10,
-  },
-  gaugeWrapper: {
-    width: 100,
-    height: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  gaugeInnerContent: {
-    position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  gaugePercent: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  gaugeLabel: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 10,
-    fontWeight: '500',
-    marginTop: 1,
-  },
-  sectionHeader: {
-    marginTop: 18,
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-    letterSpacing: -0.3,
-  },
-  dateSubtitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 4,
-  },
-  sectionSubtitle: {
-    fontSize: 12,
-    color: COLORS.textMuted,
+    color: '#64748B',
+    marginTop: 2,
     fontWeight: '500',
   },
   kpiGrid: {
     flexDirection: 'row',
-    gap: 14,
-  },
-  kpiCard: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 18,
-  },
-  kpiIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  kpiNumber: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: COLORS.textPrimary,
-    letterSpacing: -0.5,
-  },
-  kpiTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-    marginTop: 4,
-  },
-  kpiSub: {
-    fontSize: 12,
-    color: COLORS.textMuted,
-    marginTop: 2,
-  },
-  progressSection: {
-    marginTop: 22,
-  },
-  progressCard: {
-    marginTop: 12,
-    padding: 18,
-    borderRadius: 18,
-  },
-  progressItem: {
-    marginBottom: 16,
-  },
-  progressRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  progressLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  progressPercent: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
-  progressBarBg: {
-    height: 5,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressBarFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  featuredSection: {
-    marginTop: 22,
-  },
-  featuredHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  seeAllText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  tramitesCarousel: {
     gap: 12,
-    paddingRight: 10,
+    marginBottom: 12,
   },
-  tramiteCard: {
-    width: 175,
-    backgroundColor: COLORS.white,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
+  cleanCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.03,
     shadowRadius: 4,
     elevation: 1,
   },
-  tramiteIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 9,
-    justifyContent: 'center',
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 10,
   },
-  tramiteTitle: {
-    fontSize: 13,
+  iconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  miniPillBlue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#F0F9FF',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  miniPillBlueText: {
+    fontSize: 10,
     fontWeight: '700',
-    color: COLORS.textPrimary,
-    lineHeight: 18,
-    minHeight: 36,
+    color: '#0284C7',
   },
-  tramiteHorario: {
+  miniPillRed: {
+    backgroundColor: '#FEF2F2',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  miniPillRedText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#DC2626',
+  },
+  cleanCardNumber: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.5,
+  },
+  cleanCardTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#334155',
+    marginTop: 2,
+  },
+  cleanCardSub: {
     fontSize: 11,
-    color: COLORS.textMuted,
-    marginTop: 4,
-    marginBottom: 12,
+    color: '#94A3B8',
+    marginTop: 2,
   },
-  tramiteFooter: {
+  summaryBarCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 18,
+  },
+  summaryBarLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  iconBoxSmall: {
+    width: 28,
+    height: 28,
+    borderRadius: 7,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  summaryBarTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  summaryBarSub: {
+    fontSize: 11,
+    color: '#64748B',
+  },
+  summaryBarRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  summaryBarPercent: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1B7F38',
+  },
+  sectionContainer: {
+    marginBottom: 18,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.3,
+  },
+  linkText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.primaryDark,
+  },
+  horizontalScroll: {
+    gap: 10,
+    paddingRight: 6,
+  },
+  igraCardMinimal: {
+    width: 180,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  igraTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 6,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  igraStatusText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  igraExpText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  igraCompanyText: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 1,
+    marginBottom: 8,
+  },
+  igraBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingTop: 6,
+  },
+  igraAdminText: {
+    fontSize: 10,
+    color: '#64748B',
+    flex: 1,
+  },
+  agencyPillContainer: {
+    gap: 6,
+    marginBottom: 10,
+  },
+  pill: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  pillActive: {
+    backgroundColor: COLORS.primaryDark,
+    borderColor: COLORS.primaryDark,
+  },
+  pillText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  pillTextActive: {
+    color: '#FFFFFF',
+  },
+  expedientesColumn: {
+    gap: 10,
+  },
+  expCardMinimal: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  expHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
+  expTitleCol: {
+    flex: 1,
+  },
+  expNumText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  expDuaText: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  expInfoBlock: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  expCompany: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  expAgency: {
+    fontSize: 10,
+    color: COLORS.primaryDark,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  expBalanceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    marginBottom: 8,
+  },
+  expBalanceLabel: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  expBalanceValue: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  expDocsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  avatarStack: {
+  docChipsWrap: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 4,
+    flex: 1,
   },
-  avatarCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    justifyContent: 'center',
+  docBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: COLORS.white,
+    gap: 3,
+    backgroundColor: '#F0F9FF',
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 8,
+  docBadgeText: {
+    fontSize: 9,
+    fontWeight: '600',
+    color: '#0369A1',
+  },
+  noDocsText: {
+    fontSize: 10,
+    color: '#94A3B8',
+    fontStyle: 'italic',
+  },
+  moreDocsText: {
+    fontSize: 10,
+    color: '#64748B',
     fontWeight: '700',
   },
-  tramiteBadge: {
+  attachBtnMinimal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: '#EAF7EE',
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 6,
   },
-  tramiteBadgeText: {
+  attachBtnMinimalText: {
     fontSize: 10,
     fontWeight: '700',
+    color: '#1B7F38',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  modalSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 1,
+  },
+  modalFieldLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#475569',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  modalExpPicker: {
+    flexDirection: 'row',
+    marginBottom: 6,
+  },
+  modalPill: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginRight: 6,
+  },
+  modalPillActive: {
+    backgroundColor: COLORS.primaryDark,
+  },
+  modalPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  modalPillTextActive: {
+    color: '#FFFFFF',
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 6,
+  },
+  catPill: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  catPillActive: {
+    backgroundColor: COLORS.primaryDark,
+    borderColor: COLORS.primaryDark,
+  },
+  catPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  catPillTextActive: {
+    color: '#FFFFFF',
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    height: 38,
+    fontSize: 12,
+    color: '#0F172A',
+    marginBottom: 8,
+  },
+  uploadArea: {
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: COLORS.primaryLight,
+    borderRadius: 10,
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F0FDF4',
+    marginVertical: 6,
+  },
+  uploadAreaTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.primaryDark,
+    marginTop: 4,
+  },
+  modalCloseBtn: {
+    marginTop: 10,
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  modalCloseBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
   },
 });
-
-

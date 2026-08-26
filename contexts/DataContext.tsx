@@ -24,6 +24,8 @@ interface DataContextType {
   isLoadingData: boolean;
   addExpediente: (nuevo: Omit<Expediente, 'id' | 'fechaCreacion' | 'fechaActualizacion'>) => Promise<Expediente>;
   updateExpedienteEstado: (id: string, nuevoEstado: ExpedienteEstado, observacion?: string) => Promise<void>;
+  addDocumentoToExpediente: (expedienteId: string, documento: Documento) => Promise<void>;
+  removeDocumentoFromExpediente: (expedienteId: string, documentoId: string) => Promise<void>;
   updateIGEA: (id: string, estado: IGEAEstado, observacion?: string) => Promise<void>;
   updateIGRA: (id: string, estado: IGRAEstado, observacion?: string) => Promise<void>;
   updateCarga: (id: string, estado: CargaEstado, ubicacion?: string) => Promise<void>;
@@ -35,12 +37,12 @@ interface DataContextType {
 }
 
 const STORAGE_KEYS = {
-  EXPEDIENTES: '@siga_expedientes_v4',
-  IGEAS: '@siga_igeas_v4',
-  IGRAS: '@siga_igras_v4',
-  CARGAS: '@siga_cargas_v4',
-  PAGOS: '@siga_pagos_v4',
-  NOTIFICACIONES: '@siga_notificaciones_v4',
+  EXPEDIENTES: '@siga_expedientes_v7',
+  IGEAS: '@siga_igeas_v7',
+  IGRAS: '@siga_igras_v7',
+  CARGAS: '@siga_cargas_v7',
+  PAGOS: '@siga_pagos_v7',
+  NOTIFICACIONES: '@siga_notificaciones_v7',
 };
 
 const INITIAL_EXPEDIENTES: Expediente[] = [
@@ -80,6 +82,7 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
         id: 'doc-1',
         nombre: 'DUA_Declaracion_10030_00231A.pdf',
         tipo: 'application/pdf',
+        categoria: 'declaracion',
         url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
         fechaSubida: '2026-07-14T09:35:00Z',
         subidoPor: 'Ricardo García',
@@ -87,8 +90,9 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
       },
       {
         id: 'doc-2',
-        nombre: 'BL_Haina_Terminales_99812.pdf',
+        nombre: 'Factura_Comercial_Mercantil_001.pdf',
         tipo: 'application/pdf',
+        categoria: 'factura',
         url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
         fechaSubida: '2026-07-14T09:36:00Z',
         subidoPor: 'Ricardo García',
@@ -96,8 +100,9 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
       },
       {
         id: 'doc-3',
-        nombre: 'Acta_Inspeccion_Fisica_DGA.pdf',
+        nombre: 'BL_Haina_Terminales_99812.pdf',
         tipo: 'application/pdf',
+        categoria: 'bl',
         url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
         fechaSubida: '2026-07-15T09:37:00Z',
         subidoPor: 'RICARDO GARCIA HERNANDEZ',
@@ -113,7 +118,7 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
   {
     id: 'exp-002',
     numero: 'EXP-2026-002',
-    declaracion: '10030-ic01-2607-002bcd',
+    declaracion: '10030-IC01-2607-002BCD',
     noResultadoInspeccion: '10030-IC10-2607-002154',
     fechaDeclaracion: '17/07/2026',
     fechaInspeccion: '18/07/2026',
@@ -146,15 +151,17 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
         id: 'doc-4',
         nombre: 'Factura_Repuestos_2026.pdf',
         tipo: 'application/pdf',
+        categoria: 'factura',
         url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
         fechaSubida: '2026-07-17T14:20:00Z',
-        subidoPor: 'Ricardo García',
+        subidoPor: 'Industrias Nacionales',
         size: 854000,
       },
       {
         id: 'doc-5',
         nombre: 'Inspeccion_Fisica_Haina.pdf',
         tipo: 'application/pdf',
+        categoria: 'inspeccion',
         url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
         fechaSubida: '2026-07-18T11:00:00Z',
         subidoPor: 'RICARDO GARCIA HERNANDEZ',
@@ -203,10 +210,21 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
         id: 'doc-6',
         nombre: 'Comprobante_Pago_SIGA_003.pdf',
         tipo: 'application/pdf',
+        categoria: 'pago',
         url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
         fechaSubida: '2026-06-08T10:40:00Z',
-        subidoPor: 'Ricardo García',
+        subidoPor: 'Corporacion Digital SRL',
         size: 610000,
+      },
+      {
+        id: 'doc-6b',
+        nombre: 'Factura_Comercial_Hardware.pdf',
+        tipo: 'application/pdf',
+        categoria: 'factura',
+        url: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+        fechaSubida: '2026-06-05T09:00:00Z',
+        subidoPor: 'Corporacion Digital SRL',
+        size: 480000,
       },
     ],
     observaciones: [
@@ -215,72 +233,34 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
       'Pago liquidado exitosamente mediante débito bancario SIGA.',
     ],
   },
-  {
-    id: 'exp-004',
-    numero: 'EXP-2026-004',
-    declaracion: '10040-IC01-2607-00412E',
-    noResultadoInspeccion: '10040-IC10-2607-001890',
-    fechaDeclaracion: '08/07/2026',
-    fechaInspeccion: '09/07/2026',
-    administracion: '10040 - ADM. PUERTO MULTIMODAL CAUCEDO',
-    regimen: 'DESPACHO A CONSUMO',
-    importadorId: 'usr-imp-01',
-    importadorNombre: 'CARIBE IMPORT LOGISTICS S.R.L.',
-    inspectorCodigo: '00038910',
-    inspectorNombre: 'LIC. MARIA GONZALEZ',
-    canalControl: 'AMARILLO',
-    despachoTipo: 'GENERAL',
-    depositoDestino: 'DP WORLD CAUCEDO TERMINAL',
-    consignatario: 'Caribe Import Logistics S.R.L.',
-    agencia: 'Servicios Aduaneros Globales RD',
-    estado: 'fase_2_aprobado_verificador',
-    fechaCreacion: '2026-07-08T09:00:00Z',
-    fechaActualizacion: '2026-07-09T17:30:00Z',
-    valorFOB: 34500,
-    valorCIF: 38200,
-    peso: 2100,
-    mercancia: 'Módulos solares e inversores de energía renovable',
-    impuestos: {
-      itbis: 6876,
-      selectivo: 0,
-      arancel: 0,
-      total: 6876,
-    },
-    documentos: [],
-    observaciones: [
-      'Aprobado por el verificador DGA LIC. MARIA GONZALEZ.',
-      'Exoneración arancelaria aplicada conforme Ley 57-07.',
-      'Pendiente de autorización de retiro final.',
-    ],
-  },
 ];
 
 const INITIAL_IGEAS: IGEA[] = [
   {
     id: 'igea-001',
     expedienteId: 'exp-001',
-    numero: 'IGEA-2025-001',
-    manifiesto: 'MAN-2025-CAUC-0941',
+    numero: 'IGEA-2026-001',
+    manifiesto: 'MAN-2026-CAUC-0941',
     estado: 'incompleto',
-    fechaRegistro: '2025-01-14T10:00:00Z',
+    fechaRegistro: '2026-07-14T10:00:00Z',
     observaciones: ['Pendiente de confirmación de descarga en muelle 4.'],
   },
   {
     id: 'igea-002',
     expedienteId: 'exp-002',
-    numero: 'IGEA-2025-002',
-    manifiesto: 'MAN-2025-HAIN-1120',
+    numero: 'IGEA-2026-002',
+    manifiesto: 'MAN-2026-HAIN-1120',
     estado: 'completo',
-    fechaRegistro: '2025-01-11T09:15:00Z',
+    fechaRegistro: '2026-07-17T09:15:00Z',
     observaciones: ['Ingreso a patio aduanero validado y tarjado.'],
   },
   {
     id: 'igea-003',
     expedienteId: 'exp-003',
-    numero: 'IGEA-2025-003',
-    manifiesto: 'MAN-2025-CAUC-0812',
+    numero: 'IGEA-2026-003',
+    manifiesto: 'MAN-2026-CAUC-0812',
     estado: 'completo',
-    fechaRegistro: '2025-01-05T11:00:00Z',
+    fechaRegistro: '2026-06-05T11:00:00Z',
     observaciones: ['Ingreso conforme sin novedades.'],
   },
 ];
@@ -304,7 +284,7 @@ const INITIAL_IGRAS: IGRA[] = [
     id: 'igra-003',
     expedienteId: 'exp-003',
     estado: 'aprobado',
-    fechaDespacho: '2025-01-08T11:30:00Z',
+    fechaDespacho: '2026-06-08T11:30:00Z',
     documentos: [],
     observaciones: ['Despacho aduanero autorizado. Conduce de salida emitido #DS-9921.'],
   },
@@ -314,31 +294,31 @@ const INITIAL_CARGAS: EstadoCarga[] = [
   {
     id: 'crg-001',
     bl: 'MEDU99201481',
-    manifiesto: 'MAN-2025-CAUC-0941',
+    manifiesto: 'MAN-2026-CAUC-0941',
     codigoInterno: 'CTNR-4491-RD',
     estado: 'proceso',
     ubicacion: 'DP World Caucedo - Bloque B-12',
-    fechaActualizacion: '2025-01-15T09:00:00Z',
+    fechaActualizacion: '2026-07-15T09:00:00Z',
     expedienteId: 'exp-001',
   },
   {
     id: 'crg-002',
-    bl: 'HLCU20251108',
-    manifiesto: 'MAN-2025-HAIN-1120',
+    bl: 'HLCU20261108',
+    manifiesto: 'MAN-2026-HAIN-1120',
     codigoInterno: 'CTNR-7721-RD',
     estado: 'lista',
     ubicacion: 'HIT Puerto Río Haina - Nave 3',
-    fechaActualizacion: '2025-01-16T15:30:00Z',
+    fechaActualizacion: '2026-07-18T15:30:00Z',
     expedienteId: 'exp-002',
   },
   {
     id: 'crg-003',
     bl: 'MAEU88192033',
-    manifiesto: 'MAN-2025-CAUC-0812',
+    manifiesto: 'MAN-2026-CAUC-0812',
     codigoInterno: 'CTNR-1029-RD',
     estado: 'liberada',
     ubicacion: 'Entregada en Almacén Fiscal - Sto Dgo',
-    fechaActualizacion: '2025-01-08T12:00:00Z',
+    fechaActualizacion: '2026-06-08T12:00:00Z',
     expedienteId: 'exp-003',
   },
 ];
@@ -347,32 +327,32 @@ const INITIAL_PAGOS: Pago[] = [
   {
     id: 'pag-001',
     expedienteId: 'exp-001',
-    numeroExpediente: 'EXP-2025-001',
+    numeroExpediente: 'EXP-2026-001',
     monto: 0,
     montoTotal: 18430,
     estado: 'pendiente',
-    fechaVencimiento: '2025-01-25T23:59:59Z',
+    fechaVencimiento: '2026-07-30T23:59:59Z',
   },
   {
     id: 'pag-002',
     expedienteId: 'exp-002',
-    numeroExpediente: 'EXP-2025-002',
+    numeroExpediente: 'EXP-2026-002',
     monto: 5000,
     montoTotal: 13416,
     estado: 'parcial',
-    fechaVencimiento: '2025-01-22T23:59:59Z',
-    fechaPago: '2025-01-14T10:30:00Z',
+    fechaVencimiento: '2026-07-28T23:59:59Z',
+    fechaPago: '2026-07-18T10:30:00Z',
     metodoPago: 'Transferencia ACH Banco de Reservas',
   },
   {
     id: 'pag-003',
     expedienteId: 'exp-003',
-    numeroExpediente: 'EXP-2025-003',
+    numeroExpediente: 'EXP-2026-003',
     monto: 18872,
     montoTotal: 18872,
     estado: 'pagado',
-    fechaVencimiento: '2025-01-10T23:59:59Z',
-    fechaPago: '2025-01-08T10:45:00Z',
+    fechaVencimiento: '2026-06-15T23:59:59Z',
+    fechaPago: '2026-06-08T10:45:00Z',
     metodoPago: 'Pago Electrónico SIGA - Tarjeta Corporativa',
   },
 ];
@@ -381,27 +361,27 @@ const INITIAL_NOTIFICACIONES: Notificacion[] = [
   {
     id: 'notif-001',
     titulo: 'Nuevo Expediente Asignado',
-    mensaje: 'El expediente EXP-2025-001 fue recibido en el sistema y requiere validación.',
+    mensaje: 'El expediente EXP-2026-001 fue recibido en el sistema y requiere validación.',
     tipo: 'expediente',
-    fechaEnvio: '2025-01-14T09:30:00Z',
+    fechaEnvio: '2026-07-14T09:30:00Z',
     leida: false,
     expedienteId: 'exp-001',
   },
   {
     id: 'notif-002',
     titulo: 'Aforo Físico Completado',
-    mensaje: 'La inspección física del expediente EXP-2025-002 en Caucedo ha finalizado satisfactoriamente.',
+    mensaje: 'La inspección física del expediente EXP-2026-002 en Haina ha finalizado satisfactoriamente.',
     tipo: 'carga',
-    fechaEnvio: '2025-01-12T11:05:00Z',
+    fechaEnvio: '2026-07-18T11:05:00Z',
     leida: false,
     expedienteId: 'exp-002',
   },
   {
     id: 'notif-003',
     titulo: 'Autorización IGRA Aprobada',
-    mensaje: 'El expediente EXP-2025-003 cuenta con pase de salida autorizado para retiro inmediato.',
+    mensaje: 'El expediente EXP-2026-003 cuenta con pase de salida autorizado para retiro inmediato.',
     tipo: 'igra',
-    fechaEnvio: '2025-01-08T11:35:00Z',
+    fechaEnvio: '2026-06-08T11:35:00Z',
     leida: true,
     expedienteId: 'exp-003',
   },
@@ -543,6 +523,36 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await AsyncStorage.setItem(STORAGE_KEYS.NOTIFICACIONES, JSON.stringify(newNotifs));
 
     return createdExpediente;
+  };
+
+  const addDocumentoToExpediente = async (expedienteId: string, documento: Documento) => {
+    const updated = expedientes.map((exp) => {
+      if (exp.id === expedienteId) {
+        return {
+          ...exp,
+          documentos: [...(exp.documentos || []), documento],
+          fechaActualizacion: new Date().toISOString(),
+        };
+      }
+      return exp;
+    });
+    setExpedientes(updated);
+    await AsyncStorage.setItem(STORAGE_KEYS.EXPEDIENTES, JSON.stringify(updated));
+  };
+
+  const removeDocumentoFromExpediente = async (expedienteId: string, documentoId: string) => {
+    const updated = expedientes.map((exp) => {
+      if (exp.id === expedienteId) {
+        return {
+          ...exp,
+          documentos: (exp.documentos || []).filter((d) => d.id !== documentoId),
+          fechaActualizacion: new Date().toISOString(),
+        };
+      }
+      return exp;
+    });
+    setExpedientes(updated);
+    await AsyncStorage.setItem(STORAGE_KEYS.EXPEDIENTES, JSON.stringify(updated));
   };
 
   const updateExpedienteEstado = async (id: string, nuevoEstado: ExpedienteEstado, observacion?: string) => {
@@ -705,6 +715,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isLoadingData,
         addExpediente,
         updateExpedienteEstado,
+        addDocumentoToExpediente,
+        removeDocumentoFromExpediente,
         updateIGEA,
         updateIGRA,
         updateCarga,

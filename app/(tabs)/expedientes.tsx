@@ -86,7 +86,9 @@ export default function ExpedientesScreen() {
       const matchDec = exp.declaracion.toLowerCase().includes(q);
       const matchMerc = exp.mercancia.toLowerCase().includes(q);
       const matchImp = exp.importadorNombre.toLowerCase().includes(q);
-      return matchNum || matchDec || matchMerc || matchImp;
+      const matchCons = exp.consignatario.toLowerCase().includes(q);
+      const matchAge = exp.agencia.toLowerCase().includes(q);
+      return matchNum || matchDec || matchMerc || matchImp || matchCons || matchAge;
     }
 
     return true;
@@ -99,7 +101,7 @@ export default function ExpedientesScreen() {
         <View>
           <Text style={styles.headerTitle}>Gestión de Expedientes</Text>
           <Text style={styles.headerSubtitle}>
-            {isImportador ? 'Mis declaraciones y aforos' : 'Expedientes para verificación DGA'}
+            {isImportador ? 'Mis declaraciones, facturas y aforos' : 'Expedientes para verificación DGA'}
           </Text>
         </View>
 
@@ -198,7 +200,7 @@ export default function ExpedientesScreen() {
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Buscar por expediente, DUA o mercancía..."
+            placeholder="Buscar por expediente, DUA, empresa, agencia..."
             placeholderTextColor={COLORS.textMuted}
           />
         </View>
@@ -274,63 +276,99 @@ export default function ExpedientesScreen() {
               </Text>
             </Card>
           ) : (
-            filteredExpedientes.map((exp) => (
-              <Card
-                key={exp.id}
-                variant="elevated"
-                style={styles.expCard}
-                onPress={() => router.push(`/expedientes/${exp.id}` as any)}
-              >
-                <View style={styles.expCardHeader}>
-                  <View>
-                    <Text style={styles.expNumber}>{exp.numero}</Text>
-                    <Text style={styles.expDeclaracion}>{exp.declaracion}</Text>
+            filteredExpedientes.map((exp) => {
+              const pagoAsociado = pagos.find((p) => p.expedienteId === exp.id);
+              const balancePendiente = pagoAsociado
+                ? pagoAsociado.montoTotal - pagoAsociado.monto
+                : exp.impuestos.total;
+              const estadoPago = pagoAsociado?.estado || 'pendiente';
+
+              return (
+                <Card
+                  key={exp.id}
+                  variant="elevated"
+                  style={styles.expCard}
+                  onPress={() => router.push(`/expedientes/${exp.id}` as any)}
+                >
+                  <View style={styles.expCardHeader}>
+                    <View>
+                      <Text style={styles.expNumber}>{exp.numero}</Text>
+                      <Text style={styles.expDeclaracion}>DUA: {exp.declaracion}</Text>
+                    </View>
+                    <View style={styles.badgeCol}>
+                      <StatusBadge status={exp.estado} />
+                    </View>
                   </View>
-                  <StatusBadge status={exp.estado} />
-                </View>
 
-                <Text style={styles.expMercancia} numberOfLines={2}>
-                  {exp.mercancia}
-                </Text>
-
-                <View style={styles.metaInfoRow}>
-                  <View style={styles.metaItem}>
-                    <Calendar size={13} color={COLORS.textMuted} />
-                    <Text style={styles.metaText}>
-                      {new Date(exp.fechaCreacion).toLocaleDateString()}
+                  {/* Nombre de la Empresa y Agencia */}
+                  <View style={styles.companyBanner}>
+                    <Text style={styles.companyNameText} numberOfLines={1}>
+                      {exp.consignatario || exp.importadorNombre}
                     </Text>
-                  </View>
-                  <View style={styles.metaItem}>
-                    <Weight size={13} color={COLORS.textMuted} />
-                    <Text style={styles.metaText}>{exp.peso.toLocaleString()} kg</Text>
-                  </View>
-                </View>
-
-                <View style={styles.expDivider} />
-
-                <View style={styles.expCardFooter}>
-                  <View>
-                    <Text style={styles.footerLabel}>Valor CIF</Text>
-                    <Text style={styles.cifValue}>USD ${exp.valorCIF.toLocaleString()}</Text>
-                  </View>
-
-                  <View>
-                    <Text style={styles.footerLabel}>Total Impuestos</Text>
-                    <Text style={styles.impuestosValue}>
-                      USD ${exp.impuestos.total.toLocaleString()}
+                    <Text style={styles.agencyText} numberOfLines={1}>
+                      🏢 {exp.agencia}
                     </Text>
                   </View>
 
-                  <TouchableOpacity
-                    onPress={() => router.push(`/expedientes/${exp.id}` as any)}
-                    style={styles.viewDetailButton}
-                  >
-                    <Text style={styles.viewDetailText}>Ver Detalles</Text>
-                    <ArrowRight size={14} color={COLORS.primaryDark} />
-                  </TouchableOpacity>
-                </View>
-              </Card>
-            ))
+                  <Text style={styles.expMercancia} numberOfLines={2}>
+                    {exp.mercancia}
+                  </Text>
+
+                  <View style={styles.metaInfoRow}>
+                    <View style={styles.metaItem}>
+                      <Calendar size={13} color={COLORS.textMuted} />
+                      <Text style={styles.metaText}>
+                        {new Date(exp.fechaCreacion).toLocaleDateString()}
+                      </Text>
+                    </View>
+                    <View style={styles.metaItem}>
+                      <Weight size={13} color={COLORS.textMuted} />
+                      <Text style={styles.metaText}>{exp.peso.toLocaleString()} kg</Text>
+                    </View>
+                    <View style={styles.metaItem}>
+                      <FileCheck2 size={13} color={COLORS.primaryDark} />
+                      <Text style={[styles.metaText, { color: COLORS.primaryDark, fontWeight: '700' }]}>
+                        {exp.documentos?.length || 0} Docs
+                      </Text>
+                    </View>
+                    <View style={{ marginLeft: 'auto' }}>
+                      <StatusBadge status={estadoPago} size="small" />
+                    </View>
+                  </View>
+
+                  <View style={styles.expDivider} />
+
+                  <View style={styles.expCardFooter}>
+                    <View>
+                      <Text style={styles.footerLabel}>Balance a Pagar</Text>
+                      <Text
+                        style={[
+                          styles.impuestosValue,
+                          balancePendiente > 0 ? { color: '#DC2626' } : { color: COLORS.primaryDark },
+                        ]}
+                      >
+                        USD ${balancePendiente.toLocaleString()}
+                      </Text>
+                    </View>
+
+                    <View>
+                      <Text style={styles.footerLabel}>Total Impuestos</Text>
+                      <Text style={styles.cifValue}>
+                        USD ${exp.impuestos.total.toLocaleString()}
+                      </Text>
+                    </View>
+
+                    <TouchableOpacity
+                      onPress={() => router.push(`/expedientes/${exp.id}` as any)}
+                      style={styles.viewDetailButton}
+                    >
+                      <Text style={styles.viewDetailText}>Ver Detalles</Text>
+                      <ArrowRight size={14} color={COLORS.primaryDark} />
+                    </TouchableOpacity>
+                  </View>
+                </Card>
+              );
+            })
           )}
         </View>
       </ScrollView>
@@ -521,13 +559,33 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 6,
   },
+  badgeCol: {
+    alignItems: 'flex-end',
+  },
+  companyBanner: {
+    backgroundColor: COLORS.surfaceSubtle,
+    padding: 8,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  companyNameText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  agencyText: {
+    fontSize: 10,
+    color: COLORS.primaryDark,
+    fontWeight: '600',
+    marginTop: 2,
+  },
   expNumber: {
     fontSize: 16,
     fontWeight: '800',
     color: COLORS.textPrimary,
   },
   expDeclaracion: {
-    fontSize: 12,
+    fontSize: 11,
     color: COLORS.textMuted,
     marginTop: 1,
   },

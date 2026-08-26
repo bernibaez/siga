@@ -16,6 +16,7 @@ export interface Documento {
   id: string;
   nombre: string;
   tipo: string;                       // MIME type o extensión ej. application/pdf, image/jpeg
+  categoria?: 'factura' | 'declaracion' | 'pago' | 'bl' | 'inspeccion' | 'otro';
   url: string;                        // URI del archivo
   fechaSubida: string;                // ISO 8601
   subidoPor: string;

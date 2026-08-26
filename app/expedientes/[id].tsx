@@ -55,6 +55,8 @@ export default function DetalleExpedienteScreen() {
     cargas,
     pagos,
     updateExpedienteEstado,
+    addDocumentoToExpediente,
+    removeDocumentoFromExpediente,
   } = useData();
 
   const expediente = expedientes.find((e) => e.id === id);
@@ -66,6 +68,13 @@ export default function DetalleExpedienteScreen() {
   const [documentosLocales, setDocumentosLocales] = useState<Documento[]>(
     expediente?.documentos || []
   );
+
+  // Keep in sync with expediente documents
+  React.useEffect(() => {
+    if (expediente?.documentos) {
+      setDocumentosLocales(expediente.documentos);
+    }
+  }, [expediente?.documentos]);
 
   if (!expediente) {
     return (
@@ -149,13 +158,15 @@ export default function DetalleExpedienteScreen() {
     );
   };
 
-  const handleAddDocument = (nuevoDoc: Documento) => {
+  const handleAddDocument = async (nuevoDoc: Documento) => {
     setDocumentosLocales((prev) => [...prev, nuevoDoc]);
+    await addDocumentoToExpediente(expediente.id, nuevoDoc);
     Alert.alert('Documento Adjuntado', `"${nuevoDoc.nombre}" se agregó al expediente.`);
   };
 
-  const handleRemoveDocument = (docId: string) => {
+  const handleRemoveDocument = async (docId: string) => {
     setDocumentosLocales((prev) => prev.filter((d) => d.id !== docId));
+    await removeDocumentoFromExpediente(expediente.id, docId);
   };
 
   return (
