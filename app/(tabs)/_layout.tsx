@@ -8,6 +8,7 @@ import {
   Layers,
   Search,
   User,
+  Wallet,
 } from 'lucide-react-native';
 import { COLORS } from '@/theme/colors';
 import { AlonsoChatBot } from '@/components/ui/AlonsoChatBot';
@@ -84,6 +85,14 @@ export default function TabsLayout() {
           options={{
             title: 'Trámites',
             tabBarIcon: ({ color, size }) => <Layers size={size || 22} color={color} strokeWidth={1.8} />,
+          }}
+        />
+
+        <Tabs.Screen
+          name="billetera"
+          options={{
+            title: 'Billetera',
+            tabBarIcon: ({ color, size }) => <Wallet size={size || 22} color={color} strokeWidth={1.8} />,
           }}
         />
 

@@ -146,3 +146,35 @@ export interface ChatMessage {
     payload: string;
   }[];
 }
+
+export type CardType = 'visa' | 'mastercard' | 'amex' | 'discover' | 'debit';
+
+export type CardStatus = 'active' | 'expired' | 'blocked' | 'pending';
+
+export interface PaymentCard {
+  id: string;
+  type: CardType;
+  lastFour: string;
+  holderName: string;
+  expiryMonth: number;
+  expiryYear: number;
+  status: CardStatus;
+  isDefault: boolean;
+  balance?: number;
+  limit?: number;
+  bankName?: string;
+  color?: string;
+}
+
+export interface Transaction {
+  id: string;
+  cardId: string;
+  amount: number;
+  currency: string;
+  type: 'debit' | 'credit';
+  description: string;
+  merchant?: string;
+  date: string;
+  status: 'completed' | 'pending' | 'failed';
+  category?: string;
+}

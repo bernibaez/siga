@@ -30,6 +30,7 @@ import { COLORS } from '@/theme/colors';
 import { Card } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
+import { SuccessModal } from '@/components/ui/SuccessModal';
 import { Pago, PagoEstado } from '@/types';
 
 export default function PagosScreen() {
@@ -43,6 +44,8 @@ export default function PagosScreen() {
   const [montoAbono, setMontoAbono] = useState('');
   const [metodoSeleccionado, setMetodoSeleccionado] = useState('Transferencia Banreservas ACH');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [successVisible, setSuccessVisible] = useState(false);
+  const [lastPagoDetail, setLastPagoDetail] = useState('');
 
   // Totales
   const totalFacturado = pagos.reduce((acc, p) => acc + p.montoTotal, 0);
@@ -88,7 +91,8 @@ export default function PagosScreen() {
       setIsProcessing(true);
       await realizarPago(selectedPago.id, monto, metodoSeleccionado);
       setPaymentModalVisible(false);
-      Alert.alert('Pago Exitoso', 'El comprobante de pago aduanero ha sido registrado y procesado.');
+      setLastPagoDetail(`Expediente: ${selectedPago.numeroExpediente || selectedPago.expedienteId} · USD $${monto.toLocaleString()}`);
+      setSuccessVisible(true);
     } catch (e) {
       console.error(e);
       Alert.alert('Error', 'No se pudo procesar la transacción.');
@@ -382,6 +386,15 @@ export default function PagosScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Success Animation Modal */}
+      <SuccessModal
+        visible={successVisible}
+        type="pago"
+        detail={lastPagoDetail}
+        onClose={() => setSuccessVisible(false)}
+        actionLabel="Entendido"
+      />
     </View>
   );
 }

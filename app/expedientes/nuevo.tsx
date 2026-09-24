@@ -27,6 +27,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { FilePreview } from '@/components/ui/FilePreview';
+import { SuccessModal } from '@/components/ui/SuccessModal';
 import { Documento } from '@/types';
 
 export default function NuevoExpedienteScreen() {
@@ -48,6 +49,8 @@ export default function NuevoExpedienteScreen() {
   const [peso, setPeso] = useState('');
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successVisible, setSuccessVisible] = useState(false);
+  const [createdNumero, setCreatedNumero] = useState('');
 
   // Cálculos automáticos en vivo
   const numericCIF = parseFloat(valorCIF) || 0;
@@ -104,16 +107,8 @@ export default function NuevoExpedienteScreen() {
         ],
       });
 
-      Alert.alert(
-        'Expediente Registrado',
-        `El expediente ${numero} ha sido ingresado al sistema aduanero exitosamente.`,
-        [
-          {
-            text: 'Ver Expedientes',
-            onPress: () => router.replace('/(tabs)/expedientes'),
-          },
-        ]
-      );
+      setCreatedNumero(numero);
+      setSuccessVisible(true);
     } catch (e) {
       console.error(e);
       Alert.alert('Error', 'No se pudo registrar el expediente.');
@@ -123,10 +118,11 @@ export default function NuevoExpedienteScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
+    <>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.container}
+      >
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
@@ -287,8 +283,25 @@ export default function NuevoExpedienteScreen() {
           fullWidth
           style={styles.submitBtn}
         />
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* Success Animation Modal */}
+      <SuccessModal
+        visible={successVisible}
+        type="expediente"
+        detail={createdNumero ? `Expediente ${createdNumero} registrado en DGA` : undefined}
+        onClose={() => {
+          setSuccessVisible(false);
+          router.replace('/(tabs)/expedientes');
+        }}
+        onAction={() => {
+          setSuccessVisible(false);
+          router.replace('/(tabs)/expedientes');
+        }}
+        actionLabel="Ver Expedientes"
+      />
+    </>
   );
 }
 

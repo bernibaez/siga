@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,10 @@ import {
   Alert,
   Platform,
   Modal,
+  Animated,
+  Easing,
+  TextInput,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -28,6 +32,14 @@ import {
   RotateCcw,
   ChevronRight,
   ShieldCheck,
+  Wallet,
+  CreditCard,
+  Plus,
+  Trash2,
+  Check,
+  X,
+  Lock,
+  Wifi,
 } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -46,6 +58,98 @@ export default function PerfilScreen() {
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [biometricsEnabled, setBiometricsEnabled] = useState(true);
+
+  // ── Wallet state ─────────────────────────────────────────────────────────
+  const [addCardVisible, setAddCardVisible] = useState(false);
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const [newCardNumber, setNewCardNumber] = useState('');
+  const [newCardHolder, setNewCardHolder] = useState('');
+  const [newCardExpiry, setNewCardExpiry] = useState('');
+  const [newCardNetwork, setNewCardNetwork] = useState<'visa' | 'mastercard' | 'amex'>('visa');
+
+  const [paymentMethods, setPaymentMethods] = useState([
+    {
+      id: 'pm-1',
+      type: 'visa' as const,
+      last4: '4821',
+      holder: user?.name?.split(' ')[0] ?? 'Titular',
+      expiry: '08/27',
+      bank: 'Banco BHD León',
+      gradient: ['#1B5E20', '#2E7D32'] as [string, string],
+      isDefault: true,
+    },
+    {
+      id: 'pm-2',
+      type: 'mastercard' as const,
+      last4: '3370',
+      holder: user?.name?.split(' ')[0] ?? 'Titular',
+      expiry: '03/26',
+      bank: 'Banco Popular Dominicano',
+      gradient: ['#1565C0', '#0D3B66'] as [string, string],
+      isDefault: false,
+    },
+  ]);
+
+  const handleAddCard = () => {
+    const digits = newCardNumber.replace(/\s/g, '');
+    if (digits.length < 14 || !newCardHolder.trim() || newCardExpiry.length < 5) {
+      Alert.alert('Datos incompletos', 'Por favor completa todos los campos correctamente.');
+      return;
+    }
+    const gradients: Record<string, [string, string]> = {
+      visa: ['#1B5E20', '#2E7D32'],
+      mastercard: ['#B71C1C', '#6D1F1F'],
+      amex: ['#002B66', '#1565C0'],
+    };
+    setPaymentMethods((prev) => [
+      ...prev,
+      {
+        id: `pm-${Date.now()}`,
+        type: newCardNetwork,
+        last4: digits.slice(-4),
+        holder: newCardHolder.trim().split(' ')[0],
+        expiry: newCardExpiry,
+        bank: 'Tarjeta Registrada',
+        gradient: gradients[newCardNetwork],
+        isDefault: false,
+      },
+    ]);
+    setNewCardNumber('');
+    setNewCardHolder('');
+    setNewCardExpiry('');
+    setAddCardVisible(false);
+  };
+
+  const handleDeleteCard = (id: string) => {
+    Alert.alert('Eliminar Tarjeta', '¿Deseas eliminar este método de pago?', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Eliminar',
+        style: 'destructive',
+        onPress: () => {
+          setPaymentMethods((prev) => prev.filter((m) => m.id !== id));
+          setActiveCardIndex(0);
+        },
+      },
+    ]);
+  };
+
+  const handleSetDefault = (id: string) => {
+    setPaymentMethods((prev) =>
+      prev.map((m) => ({ ...m, isDefault: m.id === id }))
+    );
+  };
+
+  const formatCardInput = (text: string) => {
+    const cleaned = text.replace(/\D/g, '').slice(0, 16);
+    return cleaned.replace(/(\d{4})(?=\d)/g, '$1 ').trim();
+  };
+
+  const formatExpiryInput = (text: string) => {
+    const cleaned = text.replace(/\D/g, '').slice(0, 4);
+    if (cleaned.length >= 3) return `${cleaned.slice(0, 2)}/${cleaned.slice(2)}`;
+    return cleaned;
+  };
 
   const handleConfirmLogout = async () => {
     setLogoutModalVisible(false);
@@ -181,6 +285,173 @@ export default function PerfilScreen() {
               </View>
             </View>
           </Card>
+        </View>
+
+        {/* ── Wallet & Métodos de Pago ──────────────────────────────────── */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionHeader}>Wallet & Métodos de Pago</Text>
+            <TouchableOpacity
+              onPress={() => setAddCardVisible(true)}
+              style={styles.addCardBtn}
+              activeOpacity={0.75}
+            >
+              <Plus size={14} color={COLORS.white} />
+              <Text style={styles.addCardBtnText}>Agregar</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Card Carousel */}
+          {paymentMethods.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.cardCarousel}
+              snapToInterval={300 + 12}
+              decelerationRate="fast"
+              onMomentumScrollEnd={(e) => {
+                const idx = Math.round(e.nativeEvent.contentOffset.x / (300 + 12));
+                setActiveCardIndex(Math.min(idx, paymentMethods.length - 1));
+              }}
+            >
+              {paymentMethods.map((method, idx) => (
+                <LinearGradient
+                  key={method.id}
+                  colors={method.gradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.bankCard}
+                >
+                  {/* Card top row */}
+                  <View style={styles.cardTopRow}>
+                    <Text style={styles.cardBankLabel}>{method.bank}</Text>
+                    <View style={styles.cardActions}>
+                      {!method.isDefault && (
+                        <TouchableOpacity
+                          onPress={() => handleSetDefault(method.id)}
+                          style={styles.cardActionBtn}
+                          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                          <Check size={13} color="rgba(255,255,255,0.85)" />
+                        </TouchableOpacity>
+                      )}
+                      <TouchableOpacity
+                        onPress={() => handleDeleteCard(method.id)}
+                        style={styles.cardActionBtn}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Trash2 size={13} color="rgba(255,255,255,0.75)" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  {/* Chip + Contactless */}
+                  <View style={styles.cardChipRow}>
+                    {/* EMV Chip */}
+                    <View style={styles.chipContainer}>
+                      <View style={styles.chipLine} />
+                      <View style={styles.chipCenter} />
+                    </View>
+                    <Wifi size={18} color="rgba(255,255,255,0.7)" style={{ transform: [{ rotate: '90deg' }] }} />
+                  </View>
+
+                  {/* Card number */}
+                  <Text style={styles.cardNumber}>
+                    •••• •••• •••• {method.last4}
+                  </Text>
+
+                  {/* Card bottom */}
+                  <View style={styles.cardBottomRow}>
+                    <View>
+                      <Text style={styles.cardBottomLabel}>TITULAR</Text>
+                      <Text style={styles.cardBottomValue}>{method.holder}</Text>
+                    </View>
+                    <View>
+                      <Text style={styles.cardBottomLabel}>VENCE</Text>
+                      <Text style={styles.cardBottomValue}>{method.expiry}</Text>
+                    </View>
+                    {/* Network logo text */}
+                    <View style={styles.networkBadge}>
+                      {method.type === 'visa' && (
+                        <Text style={styles.visaText}>VISA</Text>
+                      )}
+                      {method.type === 'mastercard' && (
+                        <View style={styles.mastercardLogo}>
+                          <View style={[styles.mcCircle, { backgroundColor: '#EB001B' }]} />
+                          <View style={[styles.mcCircle, { backgroundColor: '#F79E1B', marginLeft: -10 }]} />
+                        </View>
+                      )}
+                      {method.type === 'amex' && (
+                        <Text style={styles.amexText}>AMEX</Text>
+                      )}
+                    </View>
+                  </View>
+
+                  {/* Default badge */}
+                  {method.isDefault && (
+                    <View style={styles.defaultBadge}>
+                      <Lock size={9} color={COLORS.primaryDark} />
+                      <Text style={styles.defaultBadgeText}>Predeterminada</Text>
+                    </View>
+                  )}
+                </LinearGradient>
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.emptyWallet}>
+              <Wallet size={32} color={COLORS.neutral} />
+              <Text style={styles.emptyWalletText}>Sin métodos de pago</Text>
+              <Text style={styles.emptyWalletSub}>Agrega una tarjeta para agilizar tus liquidaciones aduaneras.</Text>
+            </View>
+          )}
+
+          {/* Card dots indicator */}
+          {paymentMethods.length > 1 && (
+            <View style={styles.dotsRow}>
+              {paymentMethods.map((_, i) => (
+                <View
+                  key={i}
+                  style={[
+                    styles.dot,
+                    i === activeCardIndex && styles.dotActive,
+                  ]}
+                />
+              ))}
+            </View>
+          )}
+
+          {/* Methods summary list */}
+          <View style={styles.methodsSummaryCard}>
+            <View style={styles.methodsSummaryHeader}>
+              <Wallet size={14} color={COLORS.primaryDark} />
+              <Text style={styles.methodsSummaryTitle}>Métodos Registrados</Text>
+            </View>
+            {paymentMethods.map((method, idx) => (
+              <View key={method.id}>
+                {idx > 0 && <View style={styles.infoDivider} />}
+                <View style={styles.methodSummaryRow}>
+                  <LinearGradient
+                    colors={method.gradient}
+                    style={styles.methodIconGrad}
+                  >
+                    <CreditCard size={13} color="white" />
+                  </LinearGradient>
+                  <View style={styles.methodSummaryCol}>
+                    <Text style={styles.methodSummaryName}>{method.bank}</Text>
+                    <Text style={styles.methodSummaryNumber}>•••• {method.last4} · {method.type.toUpperCase()}</Text>
+                  </View>
+                  {method.isDefault && (
+                    <View style={styles.defaultTag}>
+                      <Text style={styles.defaultTagText}>Default</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            ))}
+            {paymentMethods.length === 0 && (
+              <Text style={styles.noMethodsText}>No hay métodos registrados.</Text>
+            )}
+          </View>
         </View>
 
         {/* Preferencias de la Aplicación */}
