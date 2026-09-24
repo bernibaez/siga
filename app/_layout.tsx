@@ -11,7 +11,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <AuthProvider>
         <DataProvider>
-          <StatusBar style="dark" backgroundColor={COLORS.background} />
+          <StatusBar style="dark" />
           <Stack
             screenOptions={{
               headerShown: false,

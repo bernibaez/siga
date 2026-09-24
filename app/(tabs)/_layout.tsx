@@ -73,7 +73,7 @@ export default function TabsLayout() {
         <Tabs.Screen
           name="expedientes"
           options={{
-            title: 'Expedientes',
+            title: 'Declaraciones',
             tabBarIcon: ({ color, size }) => <Folder size={size || 22} color={color} strokeWidth={1.8} />,
             tabBarBadge: pendingExpCount > 0 ? pendingExpCount : undefined,
             tabBarBadgeStyle: { backgroundColor: COLORS.warning, fontSize: 10 },

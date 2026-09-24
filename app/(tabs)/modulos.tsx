@@ -17,7 +17,6 @@ import {
   Clock,
   ArrowRight,
   ShieldCheck,
-  Ship,
   Truck,
   Plus,
   MessageSquare,
@@ -29,38 +28,15 @@ import { COLORS } from '@/theme/colors';
 import { Card } from '@/components/ui/Card';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
-import { IGEAEstado, IGRAEstado } from '@/types';
+import { IGRAEstado } from '@/types';
 
-type ModuleType = 'IGEA' | 'IGRA';
 
 export default function ModulosScreen() {
   const { user, isVerificador } = useAuth();
-  const { igeas, igras, expedientes, updateIGEA, updateIGRA } = useData();
+  const { igras, expedientes, updateIGRA } = useData();
 
-  const [activeModule, setActiveModule] = useState<ModuleType>('IGEA');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Acciones de Verificador para IGEA
-  const handleToggleIGEAEstado = (igeaId: string, currentEstado: IGEAEstado) => {
-    const nuevoEstado: IGEAEstado = currentEstado === 'completo' ? 'incompleto' : 'completo';
-    Alert.alert(
-      'Actualizar Estado IGEA',
-      `¿Deseas cambiar el estado de la Entrada Aduanera a "${nuevoEstado.toUpperCase()}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Confirmar',
-          onPress: async () => {
-            await updateIGEA(
-              igeaId,
-              nuevoEstado,
-              `Estado actualizado a ${nuevoEstado} por ${user?.name || 'Oficial DGA'}.`
-            );
-          },
-        },
-      ]
-    );
-  };
 
   // Acciones de Verificador para IGRA
   const handleUpdateIGRAEstado = (igraId: string, nuevoEstado: IGRAEstado) => {
@@ -83,11 +59,6 @@ export default function ModulosScreen() {
     );
   };
 
-  const filteredIGEAs = igeas.filter((item) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return item.numero.toLowerCase().includes(q) || item.manifiesto.toLowerCase().includes(q);
-  });
 
   const filteredIGRAs = igras.filter((item) => {
     if (!searchQuery.trim()) return true;
@@ -100,74 +71,14 @@ export default function ModulosScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Módulos IGEA & IGRA</Text>
+          <Text style={styles.headerTitle}>Módulo IGRA</Text>
           <Text style={styles.headerSubtitle}>
-            Entrada y Retiro Aduanero • República Dominicana
+            Retiro y Pase de Salida Aduanero • República Dominicana
           </Text>
         </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {/* Selector de Módulo */}
-        <View style={styles.moduleSelector}>
-          <TouchableOpacity
-            onPress={() => setActiveModule('IGEA')}
-            activeOpacity={0.8}
-            style={[styles.selectorBtn, activeModule === 'IGEA' && styles.selectorBtnActive]}
-          >
-            <Ship
-              size={18}
-              color={activeModule === 'IGEA' ? COLORS.white : COLORS.primaryDark}
-            />
-            <View>
-              <Text
-                style={[
-                  styles.selectorTitle,
-                  activeModule === 'IGEA' && styles.selectorTitleActive,
-                ]}
-              >
-                IGEA (Entrada)
-              </Text>
-              <Text
-                style={[
-                  styles.selectorSub,
-                  activeModule === 'IGEA' && styles.selectorSubActive,
-                ]}
-              >
-                Gestión de Ingreso
-              </Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setActiveModule('IGRA')}
-            activeOpacity={0.8}
-            style={[styles.selectorBtn, activeModule === 'IGRA' && styles.selectorBtnActive]}
-          >
-            <Truck
-              size={18}
-              color={activeModule === 'IGRA' ? COLORS.white : COLORS.primaryDark}
-            />
-            <View>
-              <Text
-                style={[
-                  styles.selectorTitle,
-                  activeModule === 'IGRA' && styles.selectorTitleActive,
-                ]}
-              >
-                IGRA (Retiro)
-              </Text>
-              <Text
-                style={[
-                  styles.selectorSub,
-                  activeModule === 'IGRA' && styles.selectorSubActive,
-                ]}
-              >
-                Autorización de Salida
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
 
         {/* Buscador */}
         <View style={styles.searchBar}>
@@ -176,110 +87,65 @@ export default function ModulosScreen() {
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder={`Buscar por manifiesto o referencia ${activeModule}...`}
+            placeholder="Buscar por referencia IGRA o declaración..."
             placeholderTextColor={COLORS.textMuted}
           />
         </View>
 
-        {/* Lista de Registros del Módulo Activo */}
+        {/* Lista de Registros IGRA */}
         <View style={styles.moduleList}>
-          {activeModule === 'IGEA' ? (
-            filteredIGEAs.map((item) => {
-              const exp = expedientes.find((e) => e.id === item.expedienteId);
-              return (
-                <Card key={item.id} variant="elevated" style={styles.moduleCard}>
-                  <View style={styles.cardHeader}>
-                    <View>
-                      <Text style={styles.itemNumber}>{item.numero}</Text>
-                      <Text style={styles.itemSub}>Manifiesto: {item.manifiesto}</Text>
-                    </View>
-                    <StatusBadge status={item.estado} />
+          {filteredIGRAs.map((item) => {
+            const exp = expedientes.find((e) => e.id === item.expedienteId);
+            return (
+              <Card key={item.id} variant="elevated" style={styles.moduleCard}>
+                <View style={styles.cardHeader}>
+                  <View>
+                    <Text style={styles.itemNumber}>IGRA: {exp?.numero || item.expedienteId}</Text>
+                    <Text style={styles.itemSub}>Pase de Retiro Aduanal</Text>
                   </View>
+                  <StatusBadge status={item.estado} />
+                </View>
 
-                  <View style={styles.detailBox}>
-                    <Text style={styles.detailExp}>
-                      Expediente Asociado: {exp?.numero || item.expedienteId}
+                <View style={styles.detailBox}>
+                  <Text style={styles.detailExp}>Mercancía: {exp?.mercancia || 'Carga general'}</Text>
+                  {item.fechaDespacho ? (
+                    <Text style={[styles.detailDate, { color: COLORS.primaryDark, fontWeight: '700' }]}>
+                      Despachado: {new Date(item.fechaDespacho).toLocaleDateString()}
                     </Text>
-                    <Text style={styles.detailDate}>
-                      Registro: {new Date(item.fechaRegistro).toLocaleDateString()}
-                    </Text>
+                  ) : (
+                    <Text style={styles.detailDate}>Estado: En espera de liquidación</Text>
+                  )}
+                </View>
+
+                {item.observaciones && item.observaciones.length > 0 && (
+                  <View style={styles.obsBox}>
+                    <MessageSquare size={13} color={COLORS.textMuted} />
+                    <Text style={styles.obsText}>{item.observaciones[0]}</Text>
                   </View>
+                )}
 
-                  {item.observaciones && item.observaciones.length > 0 && (
-                    <View style={styles.obsBox}>
-                      <MessageSquare size={13} color={COLORS.textMuted} />
-                      <Text style={styles.obsText}>{item.observaciones[0]}</Text>
-                    </View>
-                  )}
-
-                  {isVerificador && (
-                    <View style={styles.verificadorActions}>
-                      <Button
-                        title={item.estado === 'completo' ? 'Marcar Incompleto' : 'Validar Entrada Completa'}
-                        variant={item.estado === 'completo' ? 'outline' : 'primary'}
-                        size="small"
-                        onPress={() => handleToggleIGEAEstado(item.id, item.estado)}
-                        fullWidth
-                      />
-                    </View>
-                  )}
-                </Card>
-              );
-            })
-          ) : (
-            filteredIGRAs.map((item) => {
-              const exp = expedientes.find((e) => e.id === item.expedienteId);
-              return (
-                <Card key={item.id} variant="elevated" style={styles.moduleCard}>
-                  <View style={styles.cardHeader}>
-                    <View>
-                      <Text style={styles.itemNumber}>IGRA: {exp?.numero || item.expedienteId}</Text>
-                      <Text style={styles.itemSub}>Pase de Retiro Aduanal</Text>
-                    </View>
-                    <StatusBadge status={item.estado} />
+                {isVerificador && (
+                  <View style={styles.igraBtnRow}>
+                    <Button
+                      title="Aprobar Retiro"
+                      variant="success"
+                      size="small"
+                      icon={CheckCircle2}
+                      onPress={() => handleUpdateIGRAEstado(item.id, 'aprobado')}
+                      style={{ flex: 1, marginRight: 6 }}
+                    />
+                    <Button
+                      title="Rechazar"
+                      variant="danger"
+                      size="small"
+                      onPress={() => handleUpdateIGRAEstado(item.id, 'rechazado')}
+                      style={{ flex: 0.8 }}
+                    />
                   </View>
-
-                  <View style={styles.detailBox}>
-                    <Text style={styles.detailExp}>Mercancía: {exp?.mercancia || 'Carga general'}</Text>
-                    {item.fechaDespacho ? (
-                      <Text style={[styles.detailDate, { color: COLORS.primaryDark, fontWeight: '700' }]}>
-                        Despachado: {new Date(item.fechaDespacho).toLocaleDateString()}
-                      </Text>
-                    ) : (
-                      <Text style={styles.detailDate}>Estado: En espera de liquidación</Text>
-                    )}
-                  </View>
-
-                  {item.observaciones && item.observaciones.length > 0 && (
-                    <View style={styles.obsBox}>
-                      <MessageSquare size={13} color={COLORS.textMuted} />
-                      <Text style={styles.obsText}>{item.observaciones[0]}</Text>
-                    </View>
-                  )}
-
-                  {isVerificador && (
-                    <View style={styles.igraBtnRow}>
-                      <Button
-                        title="Aprobar Retiro"
-                        variant="success"
-                        size="small"
-                        icon={CheckCircle2}
-                        onPress={() => handleUpdateIGRAEstado(item.id, 'aprobado')}
-                        style={{ flex: 1, marginRight: 6 }}
-                      />
-                      <Button
-                        title="Rechazar"
-                        variant="danger"
-                        size="small"
-                        onPress={() => handleUpdateIGRAEstado(item.id, 'rechazado')}
-                        style={{ flex: 0.8 }}
-                      />
-                    </View>
-                  )}
-                </Card>
-              );
-            })
-          )}
+                )}
+              </Card>
+            );
+          })}
         </View>
       </ScrollView>
     </View>
@@ -311,42 +177,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: 110,
-  },
-  moduleSelector: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    gap: 12,
-  },
-  selectorBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    padding: 12,
-    gap: 10,
-  },
-  selectorBtnActive: {
-    backgroundColor: COLORS.primaryDark,
-    borderColor: COLORS.primaryDark,
-  },
-  selectorTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.textPrimary,
-  },
-  selectorTitleActive: {
-    color: COLORS.white,
-  },
-  selectorSub: {
-    fontSize: 10,
-    color: COLORS.textMuted,
-  },
-  selectorSubActive: {
-    color: 'rgba(255,255,255,0.85)',
   },
   searchBar: {
     flexDirection: 'row',
@@ -420,9 +250,6 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     fontStyle: 'italic',
     flex: 1,
-  },
-  verificadorActions: {
-    marginTop: 4,
   },
   igraBtnRow: {
     flexDirection: 'row',

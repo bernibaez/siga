@@ -59,8 +59,8 @@ export default function PagosScreen() {
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      const numExp = (pago.numeroExpediente || '').toLowerCase();
-      return numExp.includes(q) || pago.id.toLowerCase().includes(q);
+      const numDec = (pago.numeroDeclaracion || '').toLowerCase();
+      return numDec.includes(q) || pago.id.toLowerCase().includes(q);
     }
     return true;
   });
@@ -91,7 +91,7 @@ export default function PagosScreen() {
       setIsProcessing(true);
       await realizarPago(selectedPago.id, monto, metodoSeleccionado);
       setPaymentModalVisible(false);
-      setLastPagoDetail(`Expediente: ${selectedPago.numeroExpediente || selectedPago.expedienteId} · USD $${monto.toLocaleString()}`);
+      setLastPagoDetail(`Declaración: ${selectedPago.numeroDeclaracion || selectedPago.expedienteId} · USD $${monto.toLocaleString()}`);
       setSuccessVisible(true);
     } catch (e) {
       console.error(e);
@@ -104,7 +104,7 @@ export default function PagosScreen() {
   const handleConfirmByVerificador = async (pago: Pago) => {
     Alert.alert(
       'Validar Pago Aduanal',
-      `¿Deseas confirmar la liquidación total de los gravámenes para el expediente ${pago.numeroExpediente}?`,
+      `¿Deseas confirmar la liquidación total de los gravámenes para la declaración ${pago.numeroDeclaracion}?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -154,7 +154,7 @@ export default function PagosScreen() {
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Buscar por número de expediente..."
+            placeholder="Buscar por número de declaración..."
             placeholderTextColor={COLORS.textMuted}
           />
         </View>
@@ -198,7 +198,7 @@ export default function PagosScreen() {
                 <Card key={pago.id} variant="elevated" style={styles.pagoCard}>
                   <View style={styles.pagoHeader}>
                     <View>
-                      <Text style={styles.pagoExpNumber}>{pago.numeroExpediente || pago.expedienteId}</Text>
+                      <Text style={styles.pagoExpNumber}>{pago.numeroDeclaracion || pago.expedienteId}</Text>
                       <Text style={styles.pagoSub}>Ref: {pago.id.toUpperCase()}</Text>
                     </View>
                     <StatusBadge status={pago.estado} />
@@ -298,7 +298,7 @@ export default function PagosScreen() {
             <View style={styles.modalHeader}>
               <View>
                 <Text style={styles.modalTitle}>Liquidación de Impuestos</Text>
-                <Text style={styles.modalSub}>{selectedPago?.numeroExpediente}</Text>
+                <Text style={styles.modalSub}>{selectedPago?.numeroDeclaracion}</Text>
               </View>
               <TouchableOpacity
                 onPress={() => setPaymentModalVisible(false)}

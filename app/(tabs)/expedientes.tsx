@@ -99,9 +99,9 @@ export default function ExpedientesScreen() {
       {/* Header Superior */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.headerTitle}>Gestión de Expedientes</Text>
+          <Text style={styles.headerTitle}>Gestión de Declaraciones</Text>
           <Text style={styles.headerSubtitle}>
-            {isImportador ? 'Mis declaraciones, facturas y aforos' : 'Expedientes para verificación DGA'}
+            {isImportador ? 'Mis declaraciones, facturas y aforos' : 'Declaraciones para verificación DGA'}
           </Text>
         </View>
 
@@ -126,7 +126,7 @@ export default function ExpedientesScreen() {
           <Card variant="subtle" style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Sin Abrir</Text>
             <Text style={[styles.summaryValue, { color: '#1D4ED8' }]}>
-              {fase1SinAbrir} Expedientes
+              {fase1SinAbrir} Declaraciones
             </Text>
           </Card>
 
@@ -200,7 +200,7 @@ export default function ExpedientesScreen() {
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Buscar por expediente, DUA, empresa, agencia..."
+            placeholder="Buscar por declaración, DUA, empresa, agencia..."
             placeholderTextColor={COLORS.textMuted}
           />
         </View>
@@ -270,7 +270,7 @@ export default function ExpedientesScreen() {
         <View style={styles.expedientesList}>
           {filteredExpedientes.length === 0 ? (
             <Card variant="subtle" style={styles.emptyCard}>
-              <Text style={styles.emptyTitle}>No se encontraron expedientes</Text>
+              <Text style={styles.emptyTitle}>No se encontraron declaraciones</Text>
               <Text style={styles.emptySub}>
                 Prueba ajustando los filtros o el término de búsqueda ingresado.
               </Text>
@@ -373,7 +373,7 @@ export default function ExpedientesScreen() {
         </View>
       </ScrollView>
 
-      {/* Botón flotante para crear expediente (solo importadores) */}
+      {/* Botón flotante para crear declaración (solo importadores) */}
       {isImportador && (
         <TouchableOpacity
           onPress={() => router.push('/expedientes/nuevo')}

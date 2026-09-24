@@ -114,7 +114,7 @@ export type PagoEstado = 'pagado' | 'pendiente' | 'parcial';
 export interface Pago {
   id: string;
   expedienteId: string;
-  numeroExpediente?: string;
+  numeroDeclaracion?: string;
   monto: number;                     // Monto pagado
   montoTotal: number;                // Monto total a pagar
   estado: PagoEstado;

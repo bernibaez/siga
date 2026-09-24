@@ -109,7 +109,7 @@ export default function DashboardScreen() {
   // Procesar carga de archivo
   const handlePickAndUpload = async () => {
     if (!selectedExpedienteId) {
-      Alert.alert('Selección requerida', 'Por favor selecciona un expediente.');
+      Alert.alert('Selección requerida', 'Por favor selecciona una declaración.');
       return;
     }
 
@@ -241,7 +241,7 @@ export default function DashboardScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Tarjeta Resumen: Estado de Impuestos y Expedientes */}
+        {/* Tarjeta Resumen: Estado de Impuestos y Declaraciones */}
         <TouchableOpacity
           style={styles.summaryBarCard}
           onPress={() => router.push('/(tabs)/pagos')}
@@ -254,7 +254,7 @@ export default function DashboardScreen() {
             <View>
               <Text style={styles.summaryBarTitle}>Estado de Impuestos</Text>
               <Text style={styles.summaryBarSub}>
-                {pagadosExp} de {totalExp} expedientes liquidados
+                {pagadosExp} de {totalExp} declaraciones liquidadas
               </Text>
             </View>
           </View>
@@ -465,8 +465,8 @@ export default function DashboardScreen() {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Selector de Expediente */}
-              <Text style={styles.modalFieldLabel}>Expediente</Text>
+              {/* Selector de Declaración */}
+              <Text style={styles.modalFieldLabel}>Declaración</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.modalExpPicker}>
                 {expedientes.map((e) => {
                   const isSelected = selectedExpedienteId === e.id;

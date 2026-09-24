@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   backgroundDecorations: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     overflow: 'hidden',
   },
   bottomLeftGreenCurve: {

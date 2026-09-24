@@ -457,7 +457,7 @@ export default function BilleteraScreen() {
                     </Text>
                     <View style={[
                       styles.transactionStatus,
-                      transaction.status === 'completed' && transaction.statusCompleted
+                      transaction.status === 'completed' && styles.transactionStatusCompleted
                     ]}>
                       {transaction.status === 'completed' && (
                         <CheckCircle2 size={12} color={COLORS.primaryDark} />

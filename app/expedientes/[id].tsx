@@ -39,7 +39,7 @@ import { FileUpload } from '@/components/ui/FileUpload';
 import { Documento, ExpedienteEstado } from '@/types';
 
 const SIGA_STAGES = [
-  { key: 'fase_1_sin_abrir', label: 'Sin abrir el expediente', shortLabel: 'Sin abrir', desc: 'Declaración registrada' },
+  { key: 'fase_1_sin_abrir', label: 'Sin abrir la declaración', shortLabel: 'Sin abrir', desc: 'Declaración registrada' },
   { key: 'fase_2_aprobado_verificador', label: 'Aprobado por el verificador', shortLabel: 'Aprobado verificador', desc: 'Aprobado por el verificador' },
   { key: 'fase_3_despacho_aprobado', label: 'Despacho aprobado', shortLabel: 'Despacho aprobado', desc: 'Levante autorizado' },
 ];
@@ -77,9 +77,9 @@ export default function DetalleExpedienteScreen() {
   if (!expediente) {
     return (
       <View style={styles.notFoundContainer}>
-        <Text style={styles.notFoundTitle}>Expediente no encontrado</Text>
+        <Text style={styles.notFoundTitle}>Declaración no encontrada</Text>
         <Button
-          title="Regresar a Expedientes"
+          title="Regresar a Declaraciones"
           variant="outline"
           onPress={() => router.back()}
           style={{ marginTop: 12 }}
@@ -115,7 +115,7 @@ export default function DetalleExpedienteScreen() {
   const handleAdvanceStageByVerificador = (nextState: ExpedienteEstado, nextLabel: string) => {
     Alert.alert(
       `Avanzar a: ${nextLabel}`,
-      `¿Confirmas el cambio de estado de este expediente a "${nextLabel}"?`,
+      `¿Confirmas el cambio de estado de esta declaración a "${nextLabel}"?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -127,7 +127,7 @@ export default function DetalleExpedienteScreen() {
               nextState,
               `Fase actualizada a "${nextLabel}" por ${user?.name || 'Oficial DGA'}.`
             );
-            Alert.alert('Estado Actualizado', `El expediente ahora está en fase: ${nextLabel}.`);
+            Alert.alert('Estado Actualizado', `La declaración ahora está en fase: ${nextLabel}.`);
           },
         },
       ]
@@ -136,7 +136,7 @@ export default function DetalleExpedienteScreen() {
 
   const handleRejectByVerificador = () => {
     Alert.alert(
-      'Rechazar Expediente',
+      'Rechazar Declaración',
       '¿Indicar inconformidad en el aforo documental o físico?',
       [
         { text: 'Cancelar', style: 'cancel' },
@@ -149,7 +149,7 @@ export default function DetalleExpedienteScreen() {
               'rechazado',
               `Rechazado por inconsistencia documental por ${user?.name || 'Oficial DGA'}.`
             );
-            Alert.alert('Rechazado', 'Se ha marcado el expediente como rechazado.');
+            Alert.alert('Rechazado', 'Se ha marcado la declaración como rechazada.');
           },
         },
       ]
@@ -159,7 +159,7 @@ export default function DetalleExpedienteScreen() {
   const handleAddDocument = async (nuevoDoc: Documento) => {
     setDocumentosLocales((prev) => [...prev, nuevoDoc]);
     await addDocumentoToExpediente(expediente.id, nuevoDoc);
-    Alert.alert('Documento Adjuntado', `"${nuevoDoc.nombre}" se agregó al expediente.`);
+    Alert.alert('Documento Adjuntado', `"${nuevoDoc.nombre}" se agregó a la declaración.`);
   };
 
   const handleRemoveDocument = async (docId: string) => {

@@ -67,7 +67,16 @@ export default function PerfilScreen() {
   const [newCardExpiry, setNewCardExpiry] = useState('');
   const [newCardNetwork, setNewCardNetwork] = useState<'visa' | 'mastercard' | 'amex'>('visa');
 
-  const [paymentMethods, setPaymentMethods] = useState([
+  const [paymentMethods, setPaymentMethods] = useState<Array<{
+    id: string;
+    type: 'visa' | 'mastercard' | 'amex';
+    last4: string;
+    holder: string;
+    expiry: string;
+    bank: string;
+    gradient: [string, string];
+    isDefault: boolean;
+  }>>([
     {
       id: 'pm-1',
       type: 'visa' as const,
@@ -172,7 +181,7 @@ export default function PerfilScreen() {
   const handleResetData = () => {
     Alert.alert(
       'Restablecer Datos de Demostración',
-      '¿Deseas restaurar los expedientes, pagos y notificaciones de prueba a su estado original?',
+      '¿Deseas restaurar las declaraciones, pagos y notificaciones de prueba a su estado original?',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -797,48 +806,337 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.textMuted,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  cardCarousel: {
+    gap: 12,
+    paddingHorizontal: 2,
+  },
+  bankCard: {
+    width: 300,
+    height: 180,
+    borderRadius: 16,
+    padding: 18,
+    justifyContent: 'space-between',
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  cardBankLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: 'rgba(255,255,255,0.95)',
+  },
+  cardActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  cardActionBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+  },
+  cardChipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginVertical: 8,
+  },
+  chipContainer: {
+    width: 40,
+    height: 28,
+    borderRadius: 6,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chipLine: {
+    width: 28,
+    height: 2,
+    backgroundColor: 'rgba(255,255,255,0.6)',
+    marginBottom: 4,
+  },
+  chipCenter: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.6)',
+  },
+  cardNumber: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: 'white',
+    letterSpacing: 2,
+  },
+  cardBottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  cardBottomLabel: {
+    fontSize: 9,
+    color: 'rgba(255,255,255,0.7)',
+    fontWeight: '600',
+  },
+  cardBottomValue: {
+    fontSize: 12,
+    color: 'white',
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  networkBadge: {
+    alignItems: 'flex-end',
+  },
+  visaText: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: 'white',
+    letterSpacing: 2,
+  },
+  mastercardLogo: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  mcCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+  },
+  amexText: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: 'white',
+    letterSpacing: 1,
+  },
+  defaultBadge: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  defaultBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: 'white',
+  },
+  walletCard: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    padding: 16,
+  },
+  walletHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  walletTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  addCardBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#EAF7EE',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  addCardBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.primaryDark,
+  },
+  cardPreview: {
+    height: 160,
+    borderRadius: 14,
+    padding: 16,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  cardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  cardChip: {
+    width: 36,
+    height: 24,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 4,
+  },
+  cardNetwork: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: 'white',
+    letterSpacing: 1,
+  },
+  cardMiddle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'white',
+    letterSpacing: 2,
+  },
+  cardBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  cardHolder: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '600',
+  },
+  cardExpiry: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '600',
+  },
+  emptyWallet: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    gap: 8,
+  },
+  emptyWalletText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  emptyWalletSub: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 12,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#E0E0E0',
+  },
+  dotActive: {
+    backgroundColor: COLORS.primaryDark,
+  },
+  methodsSummaryCard: {
+    marginHorizontal: 16,
+    padding: 14,
+    marginTop: 8,
+  },
+  methodsSummaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+  },
+  methodsSummaryTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  methodSummaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 6,
+  },
+  methodIconGrad: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  methodSummaryCol: {
+    flex: 1,
+  },
+  methodSummaryName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.textPrimary,
+  },
+  methodSummaryNumber: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 1,
+  },
+  defaultTag: {
+    backgroundColor: '#EAF7EE',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  defaultTagText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: COLORS.primaryDark,
+  },
+  noMethodsText: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    paddingVertical: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
   },
   modalContainer: {
-    width: '100%',
-    maxWidth: 340,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 20,
     padding: 24,
+    width: '100%',
+    maxWidth: 320,
     alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
   },
   modalIconCircle: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: '#FEF2F2',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 8,
-    textAlign: 'center',
+    color: COLORS.textPrimary,
+    marginBottom: 6,
   },
   modalMessage: {
     fontSize: 13,
-    color: '#64748B',
+    color: COLORS.textSecondary,
     textAlign: 'center',
-    lineHeight: 19,
-    marginBottom: 22,
+    marginBottom: 20,
+    lineHeight: 18,
   },
   modalButtonsRow: {
     flexDirection: 'row',
@@ -848,32 +1146,25 @@ const styles = StyleSheet.create({
   modalCancelBtn: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+    backgroundColor: COLORS.surfaceSubtle,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   modalCancelText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#475569',
+    color: COLORS.textSecondary,
   },
   modalConfirmBtn: {
-    flex: 1.2,
+    flex: 1,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 10,
     backgroundColor: '#DC2626',
     alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#DC2626',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    elevation: 3,
   },
   modalConfirmText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
 });

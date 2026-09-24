@@ -12,6 +12,7 @@ import {
   IGRAEstado,
   CargaEstado,
   PagoEstado,
+  Documento,
 } from '@/types';
 
 interface DataContextType {
@@ -48,7 +49,7 @@ const STORAGE_KEYS = {
 const INITIAL_EXPEDIENTES: Expediente[] = [
   {
     id: 'exp-001',
-    numero: 'EXP-2026-001',
+    numero: 'DEC-2026-001',
     declaracion: '10030-IC01-2607-00231A',
     noResultadoInspeccion: '10030-IC10-2607-001A76',
     fechaDeclaracion: '14/07/2026',
@@ -110,7 +111,7 @@ const INITIAL_EXPEDIENTES: Expediente[] = [
       },
     ],
     observaciones: [
-      'Declaración registrada sin abrir el expediente.',
+      'Declaración registrada sin abrir.',
       'Asignada a Inspector 00046525 RICARDO GARCIA HERNANDEZ.',
       'S/C: Pantalla de Inspección en Terminales Haina Oriental.',
     ],
@@ -327,7 +328,7 @@ const INITIAL_PAGOS: Pago[] = [
   {
     id: 'pag-001',
     expedienteId: 'exp-001',
-    numeroExpediente: 'EXP-2026-001',
+    numeroDeclaracion: 'DEC-2026-001',
     monto: 0,
     montoTotal: 18430,
     estado: 'pendiente',
@@ -336,7 +337,7 @@ const INITIAL_PAGOS: Pago[] = [
   {
     id: 'pag-002',
     expedienteId: 'exp-002',
-    numeroExpediente: 'EXP-2026-002',
+    numeroDeclaracion: 'DEC-2026-002',
     monto: 5000,
     montoTotal: 13416,
     estado: 'parcial',
@@ -347,7 +348,7 @@ const INITIAL_PAGOS: Pago[] = [
   {
     id: 'pag-003',
     expedienteId: 'exp-003',
-    numeroExpediente: 'EXP-2026-003',
+    numeroDeclaracion: 'DEC-2026-003',
     monto: 18872,
     montoTotal: 18872,
     estado: 'pagado',
@@ -360,8 +361,8 @@ const INITIAL_PAGOS: Pago[] = [
 const INITIAL_NOTIFICACIONES: Notificacion[] = [
   {
     id: 'notif-001',
-    titulo: 'Nuevo Expediente Asignado',
-    mensaje: 'El expediente EXP-2026-001 fue recibido en el sistema y requiere validación.',
+    titulo: 'Nueva Declaración Asignada',
+    mensaje: 'La declaración DEC-2026-001 fue recibida en el sistema y requiere validación.',
     tipo: 'expediente',
     fechaEnvio: '2026-07-14T09:30:00Z',
     leida: false,
@@ -370,7 +371,7 @@ const INITIAL_NOTIFICACIONES: Notificacion[] = [
   {
     id: 'notif-002',
     titulo: 'Aforo Físico Completado',
-    mensaje: 'La inspección física del expediente EXP-2026-002 en Haina ha finalizado satisfactoriamente.',
+    mensaje: 'La inspección física de la declaración DEC-2026-002 en Haina ha finalizado satisfactoriamente.',
     tipo: 'carga',
     fechaEnvio: '2026-07-18T11:05:00Z',
     leida: false,
@@ -379,7 +380,7 @@ const INITIAL_NOTIFICACIONES: Notificacion[] = [
   {
     id: 'notif-003',
     titulo: 'Autorización IGRA Aprobada',
-    mensaje: 'El expediente EXP-2026-003 cuenta con pase de salida autorizado para retiro inmediato.',
+    mensaje: 'La declaración DEC-2026-003 cuenta con pase de salida autorizado para retiro inmediato.',
     tipo: 'igra',
     fechaEnvio: '2026-06-08T11:35:00Z',
     leida: true,
@@ -461,7 +462,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       manifiesto: `MAN-2025-AUTO-${Math.floor(1000 + Math.random() * 9000)}`,
       estado: 'incompleto',
       fechaRegistro: nowIso,
-      observaciones: ['Generado automáticamente al registrar expediente.'],
+      observaciones: ['Generado automáticamente al registrar declaración.'],
     };
     const newIgeas = [newIgea, ...igeas];
     setIgeas(newIgeas);
@@ -498,7 +499,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const newPago: Pago = {
       id: `pag-${id}`,
       expedienteId: id,
-      numeroExpediente: createdExpediente.numero,
+      numeroDeclaracion: createdExpediente.numero,
       monto: 0,
       montoTotal: createdExpediente.impuestos.total,
       estado: 'pendiente',
