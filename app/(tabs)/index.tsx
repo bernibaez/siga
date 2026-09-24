@@ -325,10 +325,10 @@ export default function DashboardScreen() {
           </ScrollView>
         </View>
 
-        {/* 3. Sección: Historial de Expedientes Recientes */}
+        {/* 3. Sección: Historial de Declaraciones Recientes */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Historial de Expedientes</Text>
+            <Text style={styles.sectionTitle}>Historial de Declaraciones</Text>
             <TouchableOpacity onPress={() => router.push('/(tabs)/expedientes')}>
               <Text style={styles.linkText}>Ver todos ({totalExp})</Text>
             </TouchableOpacity>

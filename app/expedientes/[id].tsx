@@ -50,7 +50,6 @@ export default function DetalleExpedienteScreen() {
   const { user, isImportador, isVerificador } = useAuth();
   const {
     expedientes,
-    igeas,
     igras,
     cargas,
     pagos,
@@ -60,7 +59,6 @@ export default function DetalleExpedienteScreen() {
   } = useData();
 
   const expediente = expedientes.find((e) => e.id === id);
-  const igea = igeas.find((i) => i.expedienteId === id);
   const igra = igras.find((i) => i.expedienteId === id);
   const carga = cargas.find((c) => c.expedienteId === id);
   const pago = pagos.find((p) => p.expedienteId === id);
@@ -406,34 +404,12 @@ export default function DetalleExpedienteScreen() {
           </View>
         </Card>
 
-        {/* 4. IGEA (Entrada Aduanera) */}
-        {igea && (
-          <Card variant="default" style={styles.sectionCard}>
-            <View style={styles.cardSectionHeader}>
-              <Ship size={16} color={COLORS.primaryDark} />
-              <Text style={styles.sectionTitle}>4. IGEA - Entrada Aduanera</Text>
-              <StatusBadge status={igea.estado} size="small" style={{ marginLeft: 'auto' }} />
-            </View>
-
-            <View style={styles.gridRow}>
-              <View style={styles.gridCol}>
-                <Text style={styles.fieldLabel}>No. IGEA</Text>
-                <Text style={styles.fieldValue}>{igea.numero}</Text>
-              </View>
-              <View style={styles.gridCol}>
-                <Text style={styles.fieldLabel}>Manifiesto</Text>
-                <Text style={styles.fieldValue}>{igea.manifiesto}</Text>
-              </View>
-            </View>
-          </Card>
-        )}
-
-        {/* 5. IGRA (Retiro Aduanero) */}
+        {/* 4. IGRA (Retiro Aduanero) */}
         {igra && (
           <Card variant="default" style={styles.sectionCard}>
             <View style={styles.cardSectionHeader}>
               <Truck size={16} color={COLORS.primaryDark} />
-              <Text style={styles.sectionTitle}>5. IGRA - Retiro y Pase de Salida</Text>
+              <Text style={styles.sectionTitle}>4. IGRA - Retiro y Pase de Salida</Text>
               <StatusBadge status={igra.estado} size="small" style={{ marginLeft: 'auto' }} />
             </View>
 
@@ -450,12 +426,12 @@ export default function DetalleExpedienteScreen() {
           </Card>
         )}
 
-        {/* 6. Estado de Carga */}
+        {/* 5. Estado de Carga */}
         {carga && (
           <Card variant="default" style={styles.sectionCard}>
             <View style={styles.cardSectionHeader}>
               <Package size={16} color={COLORS.primaryDark} />
-              <Text style={styles.sectionTitle}>6. Trazabilidad de Carga</Text>
+              <Text style={styles.sectionTitle}>5. Trazabilidad de Carga</Text>
               <StatusBadge status={carga.estado} size="small" style={{ marginLeft: 'auto' }} />
             </View>
 
@@ -475,11 +451,11 @@ export default function DetalleExpedienteScreen() {
           </Card>
         )}
 
-        {/* 7. Documentos Adjuntos */}
+        {/* 6. Documentos Adjuntos */}
         <Card variant="default" style={styles.sectionCard}>
           <View style={styles.cardSectionHeader}>
             <FileText size={16} color={COLORS.primaryDark} />
-            <Text style={styles.sectionTitle}>7. Documentación Adjunta</Text>
+            <Text style={styles.sectionTitle}>6. Documentación Adjunta</Text>
           </View>
 
           <FilePreview
