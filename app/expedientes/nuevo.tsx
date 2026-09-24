@@ -39,7 +39,7 @@ export default function NuevoExpedienteScreen() {
   const nextNum = expedientes.length + 1;
   const padNum = nextNum.toString().padStart(3, '0');
 
-  const [numero, setNumero] = useState(`EXP-2025-${padNum}`);
+  const [numero, setNumero] = useState(`DEC-2025-${padNum}`);
   const [declaracion, setDeclaracion] = useState(`DEC-${padNum}-2025`);
   const [consignatario, setConsignatario] = useState(user?.compania || 'Caribe Import Logistics S.R.L.');
   const [agencia, setAgencia] = useState('Agencia Aduanal Dominicana Express');
@@ -111,7 +111,7 @@ export default function NuevoExpedienteScreen() {
       setSuccessVisible(true);
     } catch (e) {
       console.error(e);
-      Alert.alert('Error', 'No se pudo registrar el expediente.');
+      Alert.alert('Error', 'No se pudo registrar la declaración.');
     } finally {
       setIsSubmitting(false);
     }
@@ -133,7 +133,7 @@ export default function NuevoExpedienteScreen() {
           <ArrowLeft size={20} color={COLORS.textPrimary} />
         </TouchableOpacity>
         <View>
-          <Text style={styles.headerTitle}>Nuevo Expediente</Text>
+          <Text style={styles.headerTitle}>Nueva Declaración</Text>
           <Text style={styles.headerSubtitle}>Declaración de Importación DGA</Text>
         </View>
       </View>
@@ -145,12 +145,12 @@ export default function NuevoExpedienteScreen() {
 
           <View style={styles.rowInputs}>
             <View style={styles.colInput}>
-              <Text style={styles.inputLabel}>No. Expediente</Text>
+              <Text style={styles.inputLabel}>No. Declaración</Text>
               <TextInput
                 style={styles.input}
                 value={numero}
                 onChangeText={setNumero}
-                placeholder="EXP-2025-001"
+                placeholder="DEC-2025-001"
               />
             </View>
             <View style={styles.colInput}>
@@ -275,7 +275,7 @@ export default function NuevoExpedienteScreen() {
 
         {/* Botón de Envío */}
         <Button
-          title="Crear y Registrar Expediente"
+          title="Crear y Registrar Declaración"
           size="large"
           variant="primary"
           loading={isSubmitting}
@@ -289,8 +289,8 @@ export default function NuevoExpedienteScreen() {
       {/* Success Animation Modal */}
       <SuccessModal
         visible={successVisible}
-        type="expediente"
-        detail={createdNumero ? `Expediente ${createdNumero} registrado en DGA` : undefined}
+        type="declaracion"
+        detail={createdNumero ? `Declaración ${createdNumero} registrada en DGA` : undefined}
         onClose={() => {
           setSuccessVisible(false);
           router.replace('/(tabs)/expedientes');
@@ -299,7 +299,7 @@ export default function NuevoExpedienteScreen() {
           setSuccessVisible(false);
           router.replace('/(tabs)/expedientes');
         }}
-        actionLabel="Ver Expedientes"
+        actionLabel="Ver Declaraciones"
       />
     </>
   );

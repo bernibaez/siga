@@ -308,7 +308,7 @@ export default function DashboardScreen() {
                     </Text>
                   </View>
 
-                  <Text style={styles.igraExpText}>{exp?.numero || 'EXP-2026'}</Text>
+                  <Text style={styles.igraExpText}>{exp?.numero || 'DEC-2026'}</Text>
                   <Text style={styles.igraCompanyText} numberOfLines={1}>
                     {exp?.consignatario || exp?.importadorNombre || 'Empresa'}
                   </Text>
